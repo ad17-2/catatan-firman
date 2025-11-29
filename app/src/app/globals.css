@@ -27,6 +27,15 @@
   box-sizing: border-box;
 }
 
+/* Prevent caret from appearing on non-input elements */
+body, div, section, article, main, header, footer, nav {
+  caret-color: transparent;
+}
+
+input, textarea, [contenteditable="true"] {
+  caret-color: var(--color-sage);
+}
+
 html {
   scroll-behavior: smooth;
 }

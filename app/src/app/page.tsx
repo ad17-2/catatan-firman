@@ -173,7 +173,7 @@ export default async function Home({ searchParams }: HomeProps) {
             className="font-body text-sm"
             style={{ color: "var(--color-ink-lighter)" }}
           >
-            Powered by AI-assisted sermon analysis
+            Made by love
           </p>
         </div>
       </footer>
