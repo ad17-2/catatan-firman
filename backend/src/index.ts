@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   if (args.save) {
     const supabaseValidation = validateSupabaseConfig();
     if (!supabaseValidation.isValid) {
-      printError("SUPABASE_URL and SUPABASE_ANON_KEY are required when using --save");
+      printError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when using --save");
       process.exit(1);
     }
   }
@@ -36,7 +36,7 @@ async function main(): Promise<void> {
 
     if (args.save && config.supabase) {
       consoleLogger.info("\nSaving to Supabase...");
-      const supabase = new SupabaseService(config.supabase.url, config.supabase.anonKey);
+      const supabase = new SupabaseService(config.supabase.url, config.supabase.serviceRoleKey);
       const saved = await supabase.save(args.title, result.summary);
       consoleLogger.info(`Saved with ID: ${saved.id}`);
     }
