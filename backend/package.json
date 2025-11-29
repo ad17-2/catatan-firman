@@ -1,0 +1,25 @@
+{
+  "name": "sermon-summary",
+  "version": "1.0.0",
+  "description": "Video to Notion sermon summary pipeline - Indonesian transcription with AI summarization",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@supabase/supabase-js": "^2.86.0",
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3",
+    "openai": "^4.77.0",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
