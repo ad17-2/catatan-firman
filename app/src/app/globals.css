@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+:root {
+  /* Warm, contemplative palette */
+  --color-sage: #4a5d4a;
+  --color-sage-light: #6b7f6b;
+  --color-sage-dark: #3a4a3a;
+  --color-cream: #faf8f3;
+  --color-ivory: #f5f2eb;
+  --color-parchment: #ebe7dc;
+  --color-gold: #c9a959;
+  --color-gold-muted: #b89f4e;
+  --color-ink: #2d2d2d;
+  --color-ink-light: #5a5a5a;
+  --color-ink-lighter: #8a8a8a;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 20px rgba(74, 93, 74, 0.08);
+  --shadow-card: 0 4px 30px rgba(74, 93, 74, 0.12);
+  --shadow-elevated: 0 8px 40px rgba(74, 93, 74, 0.16);
+
+  /* Transitions */
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-size: 18px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 9999;
+}
+
+/* Selection styling */
+::selection {
+  background: var(--color-sage);
+  color: var(--color-cream);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ivory);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-sage-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-sage);
+}
+
+/* Typography utilities */
+.font-serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.font-body {
+  font-family: var(--font-body), Georgia, serif;
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s var(--transition-smooth) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s var(--transition-smooth) forwards;
+}
+
+/* Stagger delays for list items */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.15s; }
+.stagger-3 { animation-delay: 0.2s; }
+.stagger-4 { animation-delay: 0.25s; }
+.stagger-5 { animation-delay: 0.3s; }
+.stagger-6 { animation-delay: 0.35s; }
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-parchment) 0%,
+    var(--color-ivory) 50%,
+    var(--color-parchment) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
