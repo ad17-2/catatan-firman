@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/lib/language-context";
+import { getTranslation } from "@/lib/translations";
 
 export function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const { lang } = useLanguage();
+  const t = getTranslation(lang);
 
   // Live search with debounce
   useEffect(() => {
@@ -37,7 +41,8 @@ export function SearchBar() {
         <div
           className="absolute -inset-0.5 rounded-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500"
           style={{
-            background: "linear-gradient(135deg, var(--color-sage-light) 0%, var(--color-gold-muted) 100%)",
+            background:
+              "linear-gradient(135deg, var(--color-sage-light) 0%, var(--color-gold-muted) 100%)",
           }}
         />
 
@@ -46,7 +51,10 @@ export function SearchBar() {
           style={{ backgroundColor: "var(--color-ivory)" }}
         >
           {/* Search icon */}
-          <div className="pl-5 pr-3" style={{ color: "var(--color-ink-lighter)" }}>
+          <div
+            className="pl-5 pr-3"
+            style={{ color: "var(--color-ink-lighter)" }}
+          >
             <svg
               width="20"
               height="20"
@@ -66,7 +74,7 @@ export function SearchBar() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search sermons..."
+            placeholder={t.searchPlaceholder}
             className="flex-1 py-4 pr-4 bg-transparent outline-none font-body text-lg"
             style={{
               color: "var(--color-ink)",

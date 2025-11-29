@@ -1,6 +1,6 @@
-import type { SermonSummaryOutput } from "../services/schemas/summary.js";
+import type { BilingualSummaryOutput } from "../services/schemas/summary.js";
 
-export type SermonSummary = SermonSummaryOutput & { rawResponse: string };
+export type BilingualSummary = BilingualSummaryOutput & { rawResponse: string };
 
 export interface AudioExtractionResult {
   outputPath: string;
@@ -23,7 +23,6 @@ export interface TranscriptionResult {
 
 export interface PipelineInput {
   inputPath: string;
-  title: string;
 }
 
 export interface PipelineOptions {
@@ -32,12 +31,11 @@ export interface PipelineOptions {
 
 export interface PipelineResult {
   transcript: TranscriptionResult;
-  summary: SermonSummary;
+  summary: BilingualSummary;
 }
 
 export interface CliArgs {
   input: string;
-  title: string;
   keepAudio: boolean;
   save: boolean;
 }

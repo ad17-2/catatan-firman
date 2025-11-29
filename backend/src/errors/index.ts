@@ -2,7 +2,7 @@ export class AppError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly cause?: Error
+    public readonly cause?: Error,
   ) {
     super(message);
     this.name = "AppError";
@@ -41,7 +41,10 @@ export class ValidationError extends AppError {
 
 type ErrorCtor<T extends AppError> = new (message: string, cause?: Error) => T;
 
-export function wrapError<T extends AppError>(error: unknown, Ctor: ErrorCtor<T>): T {
+export function wrapError<T extends AppError>(
+  error: unknown,
+  Ctor: ErrorCtor<T>,
+): T {
   if (error instanceof AppError) return error as T;
   const cause = error instanceof Error ? error : new Error(String(error));
   return new Ctor(cause.message, cause);

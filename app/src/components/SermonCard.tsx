@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { Sermon } from "@/lib/supabase";
+import { useLanguage } from "@/lib/language-context";
+import { getTranslation } from "@/lib/translations";
 
 interface SermonCardProps {
   sermon: Sermon;
@@ -7,11 +11,17 @@ interface SermonCardProps {
 }
 
 export function SermonCard({ sermon, index }: SermonCardProps) {
-  const formattedDate = new Date(sermon.created_at).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const { lang } = useLanguage();
+  const t = getTranslation(lang);
+
+  const formattedDate = new Date(sermon.created_at).toLocaleDateString(
+    lang === "id" ? "id-ID" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
 
   // Truncate summary to ~150 chars
   const truncatedSummary =
@@ -41,7 +51,8 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
         <div
           className="absolute top-0 left-0 right-0 h-1 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
           style={{
-            background: "linear-gradient(90deg, var(--color-sage) 0%, var(--color-gold) 100%)",
+            background:
+              "linear-gradient(90deg, var(--color-sage) 0%, var(--color-gold) 100%)",
           }}
         />
 
@@ -95,7 +106,7 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
                     color: "var(--color-ink-lighter)",
                   }}
                 >
-                  +{sermon.key_points.length - 2} more
+                  +{sermon.key_points.length - 2} {t.more}
                 </span>
               )}
             </div>
@@ -106,7 +117,7 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
             className="flex items-center gap-2 font-serif text-sm font-medium tracking-wide"
             style={{ color: "var(--color-sage)" }}
           >
-            <span>Read full summary</span>
+            <span>{t.readMore}</span>
             <svg
               className="w-4 h-4 transform group-hover:translate-x-2 transition-transform duration-300"
               fill="none"
@@ -114,7 +125,11 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
               strokeWidth="1.5"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
             </svg>
           </div>
         </div>
@@ -123,7 +138,8 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
         <div
           className="absolute bottom-0 right-0 w-16 h-16 opacity-5"
           style={{
-            background: "radial-gradient(circle at bottom right, var(--color-sage) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle at bottom right, var(--color-sage) 0%, transparent 70%)",
           }}
         />
       </article>

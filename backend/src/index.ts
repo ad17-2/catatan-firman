@@ -1,8 +1,18 @@
 import "dotenv/config";
-import { loadConfig, validateConfig, validateSupabaseConfig } from "./config/index.js";
+import {
+  loadConfig,
+  validateConfig,
+  validateSupabaseConfig,
+} from "./config/index.js";
 import { Pipeline } from "./pipeline/index.js";
 import { SupabaseService } from "./services/SupabaseService.js";
-import { parseArgs, printHeader, printSummary, printError, consoleLogger } from "./cli/index.js";
+import {
+  parseArgs,
+  printHeader,
+  printSummary,
+  printError,
+  consoleLogger,
+} from "./cli/index.js";
 import { AppError } from "./errors/index.js";
 
 async function main(): Promise<void> {
@@ -17,31 +27,40 @@ async function main(): Promise<void> {
   if (args.save) {
     const supabaseValidation = validateSupabaseConfig();
     if (!supabaseValidation.isValid) {
-      printError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when using --save");
+      printError(
+        "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when using --save",
+      );
       process.exit(1);
     }
   }
 
-  printHeader(args.input, args.title);
+  printHeader(args.input);
 
   try {
     const config = loadConfig();
     const pipeline = new Pipeline(config, consoleLogger);
     const result = await pipeline.execute(
-      { inputPath: args.input, title: args.title },
-      { keepAudio: args.keepAudio }
+      { inputPath: args.input },
+      { keepAudio: args.keepAudio },
     );
 
     printSummary(result.summary);
 
     if (args.save && config.supabase) {
       consoleLogger.info("\nSaving to Supabase...");
-      const supabase = new SupabaseService(config.supabase.url, config.supabase.serviceRoleKey);
-      const saved = await supabase.save(args.title, result.summary);
-      consoleLogger.info(`Saved with ID: ${saved.id}`);
+      const supabase = new SupabaseService(
+        config.supabase.url,
+        config.supabase.serviceRoleKey,
+      );
+      const saved = await supabase.save(result.summary);
+      consoleLogger.info(`Saved with ID: ${saved.id} (${saved.title_en})`);
     }
   } catch (error) {
-    printError(error instanceof AppError ? `[${error.code}] ${error.message}` : String(error));
+    printError(
+      error instanceof AppError
+        ? `[${error.code}] ${error.message}`
+        : String(error),
+    );
     process.exit(1);
   }
 }

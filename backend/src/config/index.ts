@@ -41,6 +41,9 @@ export function loadConfig(): AppConfig {
       chunkDurationMinutes: 25,
     },
     whisper: { model: "whisper-1", language: "id" },
-    supabase: supabaseUrl && supabaseKey ? { url: supabaseUrl, serviceRoleKey: supabaseKey } : null,
+    supabase:
+      supabaseUrl && supabaseKey
+        ? { url: supabaseUrl, serviceRoleKey: supabaseKey }
+        : null,
   };
 }

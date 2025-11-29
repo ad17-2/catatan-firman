@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Crimson_Pro } from "next/font/google";
+import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -30,8 +31,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${cormorant.variable} ${crimson.variable}`}>
-      <body className="antialiased" style={{ fontFamily: "var(--font-body), Georgia, serif" }}>
-        {children}
+      <body
+        className="antialiased"
+        style={{ fontFamily: "var(--font-body), Georgia, serif" }}
+      >
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

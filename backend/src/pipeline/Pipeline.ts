@@ -1,7 +1,18 @@
 import { stat } from "fs/promises";
 import type { AppConfig } from "../config/index.js";
-import type { PipelineInput, PipelineOptions, PipelineResult } from "../types/index.js";
-import { AudioService, TranscriptionService, SummarizationService, isVideoFile, isAudioFile, isSupportedFile } from "../services/index.js";
+import type {
+  PipelineInput,
+  PipelineOptions,
+  PipelineResult,
+} from "../types/index.js";
+import {
+  AudioService,
+  TranscriptionService,
+  SummarizationService,
+  isVideoFile,
+  isAudioFile,
+  isSupportedFile,
+} from "../services/index.js";
 import { ValidationError } from "../errors/index.js";
 
 export interface Logger {
@@ -19,20 +30,27 @@ export class Pipeline {
 
   constructor(config: AppConfig, logger: Logger) {
     this.audio = new AudioService(config.audio);
-    this.transcription = new TranscriptionService({ ...config.openai, ...config.whisper });
+    this.transcription = new TranscriptionService({
+      ...config.openai,
+      ...config.whisper,
+    });
     this.summarization = new SummarizationService(config.anthropic);
     this.logger = logger;
     this.maxFileSizeMB = config.audio.maxFileSizeMB;
   }
 
-  async execute(input: PipelineInput, options: PipelineOptions): Promise<PipelineResult> {
+  async execute(
+    input: PipelineInput,
+    options: PipelineOptions,
+  ): Promise<PipelineResult> {
     this.validate(input);
     const cleanup: string[] = [];
 
     try {
       // Step 1: Audio
       this.logger.info("Step 1: Processing audio...");
-      const { audioPath, durationMinutes, needsCleanup } = await this.processAudio(input.inputPath);
+      const { audioPath, durationMinutes, needsCleanup } =
+        await this.processAudio(input.inputPath);
       if (needsCleanup && !options.keepAudio) cleanup.push(audioPath);
       this.logger.info(`Duration: ${durationMinutes} minutes`);
 
@@ -54,18 +72,26 @@ export class Pipeline {
 
   private validate(input: PipelineInput): void {
     if (!input.inputPath) throw new ValidationError("Input file required");
-    if (!input.title) throw new ValidationError("Title required");
-    if (!isSupportedFile(input.inputPath)) throw new ValidationError("Unsupported format");
+    if (!isSupportedFile(input.inputPath))
+      throw new ValidationError("Unsupported format");
   }
 
   private async processAudio(inputPath: string) {
     if (isVideoFile(inputPath)) {
       const r = await this.audio.extractAudio(inputPath);
-      return { audioPath: r.outputPath, durationMinutes: Math.round(r.durationSeconds / 60), needsCleanup: true };
+      return {
+        audioPath: r.outputPath,
+        durationMinutes: Math.round(r.durationSeconds / 60),
+        needsCleanup: true,
+      };
     }
     if (isAudioFile(inputPath)) {
       const m = await this.audio.getMetadata(inputPath);
-      return { audioPath: inputPath, durationMinutes: m.durationMinutes, needsCleanup: false };
+      return {
+        audioPath: inputPath,
+        durationMinutes: m.durationMinutes,
+        needsCleanup: false,
+      };
     }
     throw new ValidationError(`Unsupported: ${inputPath}`);
   }

@@ -1,20 +1,22 @@
 import type { Logger } from "../pipeline/index.js";
-import type { SermonSummary } from "../types/index.js";
+import type { BilingualSummary } from "../types/index.js";
+import type { LanguageSummary } from "../services/schemas/summary.js";
 
 const SEP = "=".repeat(50);
 
-export function printHeader(input: string, title: string): void {
+export function printHeader(input: string): void {
   console.log(SEP);
   console.log("Sermon Summary Pipeline");
   console.log(SEP);
-  console.log(`Input: ${input}`);
-  console.log(`Title: ${title}\n`);
+  console.log(`Input: ${input}\n`);
 }
 
-export function printSummary(summary: SermonSummary): void {
-  console.log(`\n${SEP}`);
-  console.log("SUMMARY");
-  console.log(`${SEP}\n`);
+function printLanguageSummary(summary: LanguageSummary, lang: string): void {
+  console.log(`\n${"─".repeat(50)}`);
+  console.log(`  ${lang.toUpperCase()}`);
+  console.log(`${"─".repeat(50)}\n`);
+
+  console.log(`# ${summary.title}\n`);
 
   console.log("## Summary\n");
   console.log(summary.summary + "\n");
@@ -37,6 +39,15 @@ export function printSummary(summary: SermonSummary): void {
 
   console.log("\n## Reflection Questions\n");
   summary.reflectionQuestions.forEach((q, i) => console.log(`${i + 1}. ${q}`));
+}
+
+export function printSummary(summary: BilingualSummary): void {
+  console.log(`\n${SEP}`);
+  console.log("BILINGUAL SUMMARY");
+  console.log(`${SEP}`);
+
+  printLanguageSummary(summary.en, "English");
+  printLanguageSummary(summary.id, "Indonesian");
 
   console.log(`\n${SEP}`);
   console.log("Done!");
