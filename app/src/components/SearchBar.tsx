@@ -1,31 +1,41 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSearch = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
+  // Live search with debounce
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
       if (query.trim()) {
         router.push(`/?q=${encodeURIComponent(query.trim())}`);
       } else {
         router.push("/");
       }
-    },
-    [query, router]
-  );
+    }, 300); // 300ms debounce
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [query, router]);
 
   return (
-    <form onSubmit={handleSearch} className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-xl mx-auto">
       <div className="relative group">
         {/* Decorative border */}
         <div
-          className="absolute -inset-0.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="absolute -inset-0.5 rounded-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500"
           style={{
             background: "linear-gradient(135deg, var(--color-sage-light) 0%, var(--color-gold-muted) 100%)",
           }}
@@ -67,10 +77,7 @@ export function SearchBar() {
           {query && (
             <button
               type="button"
-              onClick={() => {
-                setQuery("");
-                router.push("/");
-              }}
+              onClick={() => setQuery("")}
               className="px-4 transition-colors duration-200 hover:opacity-70"
               style={{ color: "var(--color-ink-lighter)" }}
             >
@@ -89,19 +96,8 @@ export function SearchBar() {
               </svg>
             </button>
           )}
-
-          <button
-            type="submit"
-            className="px-6 py-4 font-serif text-base font-medium tracking-wide transition-all duration-300 hover:tracking-wider"
-            style={{
-              backgroundColor: "var(--color-sage)",
-              color: "var(--color-cream)",
-            }}
-          >
-            Search
-          </button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

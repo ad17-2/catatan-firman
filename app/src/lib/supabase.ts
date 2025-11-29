@@ -24,7 +24,16 @@ export async function getSermons(searchQuery?: string): Promise<Sermon[]> {
     .order("created_at", { ascending: false });
 
   if (searchQuery) {
-    query = query.textSearch("fts", searchQuery);
+    const trimmed = searchQuery.trim();
+
+    // Convert "word1 word2" to "word1 & word2" for AND matching
+    // Also add :* for prefix matching (e.g., "Sam" matches "Samson")
+    const tsQuery = trimmed
+      .split(/\s+/)
+      .map(word => `${word}:*`)
+      .join(" & ");
+
+    query = query.textSearch("fts", tsQuery);
   }
 
   const { data, error } = await query;
