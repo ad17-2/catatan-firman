@@ -173,7 +173,7 @@ export default async function Home({ searchParams }: HomeProps) {
             className="font-body text-sm"
             style={{ color: "var(--color-ink-lighter)" }}
           >
-            Made by love
+&ldquo;To Him be the glory forever and ever. Amen.&rdquo; — Galatians 1:5
           </p>
         </div>
       </footer>
