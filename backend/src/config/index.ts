@@ -1,12 +1,6 @@
 export interface AppConfig {
   openai: { apiKey: string };
   anthropic: { apiKey: string; model: string };
-  audio: {
-    maxFileSizeMB: number;
-    bitrate: string;
-    sampleRate: number;
-    chunkDurationMinutes: number;
-  };
   whisper: { model: string; language: string };
   supabase: { url: string; serviceRoleKey: string } | null;
 }
@@ -33,12 +27,6 @@ export function loadConfig(): AppConfig {
     anthropic: {
       apiKey: process.env.ANTHROPIC_API_KEY!,
       model: "claude-sonnet-4-5",
-    },
-    audio: {
-      maxFileSizeMB: 24,
-      bitrate: "32k",
-      sampleRate: 16000,
-      chunkDurationMinutes: 25,
     },
     whisper: { model: "whisper-1", language: "id" },
     supabase:

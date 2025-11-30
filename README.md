@@ -1,22 +1,22 @@
 # Sermon Summary
 
-An end-to-end pipeline for transcribing and summarizing sermon videos, with a bilingual web application for browsing and searching summaries.
+An end-to-end pipeline for transcribing and summarizing sermon videos from YouTube, with a bilingual web application for browsing and searching summaries.
 
 ## Overview
 
-This project automates the process of converting sermon recordings into structured, searchable summaries in both English and Indonesian. It consists of two main components:
+This project automates the process of converting YouTube sermon videos into structured, searchable summaries in both English and Indonesian. It consists of two main components:
 
-1. **CLI Backend** — Extracts audio, transcribes using OpenAI Whisper, and generates bilingual summaries using Claude
+1. **CLI Backend** — Downloads from YouTube, transcribes using OpenAI Whisper, and generates bilingual summaries using Claude
 2. **Web Application** — A Next.js app for viewing and searching sermon summaries with language toggle
 
 ```mermaid
 flowchart LR
-    A[Video/Audio] --> B[CLI Backend]
+    A[YouTube URL] --> B[CLI Backend]
     B --> C[(Supabase)]
     C --> D[Next.js App]
 
     subgraph B[CLI Backend]
-        B1[FFmpeg] --> B2[Whisper]
+        B1[yt-dlp] --> B2[Whisper]
         B2 --> B3[Claude]
     end
 
@@ -30,32 +30,32 @@ flowchart LR
 
 ### CLI Backend
 
-- **Audio Extraction** — Converts video files to optimized audio using FFmpeg
-- **Smart Chunking** — Automatically splits large files to meet API limits
+- **YouTube Integration** — Downloads audio directly from YouTube URLs via yt-dlp
 - **Transcription** — Accurate Indonesian transcription via OpenAI Whisper
 - **Bilingual Summaries** — Generates both English and Indonesian summaries in a single run
 - **Auto-Generated Titles** — Claude generates appropriate titles from sermon content
-- **Database Storage** — Optional persistence to Supabase with dual-language columns
+- **Database Storage** — Persistence to Supabase with dual-language columns and YouTube link
 
 ### Web Application
 
 - **Language Toggle** — Switch between English and Indonesian with localStorage persistence
 - **Bilingual Search** — Full-text search using language-specific indexes
+- **YouTube Links** — Direct links to original sermon videos
 - **Responsive Design** — Works seamlessly on desktop and mobile
 - **Beautiful UI** — Editorial-inspired design with elegant typography
 
 ## Tech Stack
 
-| Component        | Technology              |
-| ---------------- | ----------------------- |
-| CLI Runtime      | Node.js, TypeScript     |
-| Audio Processing | FFmpeg                  |
-| Transcription    | OpenAI Whisper API      |
-| Summarization    | Claude (Anthropic)      |
-| Database         | Supabase (PostgreSQL)   |
-| Web Framework    | Next.js 16 (App Router) |
-| Styling          | Tailwind CSS            |
-| Deployment       | Netlify                 |
+| Component     | Technology              |
+| ------------- | ----------------------- |
+| CLI Runtime   | Node.js, TypeScript     |
+| YouTube DL    | yt-dlp                  |
+| Transcription | OpenAI Whisper API      |
+| Summarization | Claude (Anthropic)      |
+| Database      | Supabase (PostgreSQL)   |
+| Web Framework | Next.js 16 (App Router) |
+| Styling       | Tailwind CSS            |
+| Deployment    | Netlify                 |
 
 ## Project Structure
 
@@ -64,7 +64,7 @@ sermon-summary/
 ├── backend/                 # CLI application
 │   ├── src/
 │   │   ├── config/          # Configuration management
-│   │   ├── services/        # Core services (Audio, Transcription, Summarization, Supabase)
+│   │   ├── services/        # Core services (YouTube, Transcription, Summarization, Supabase)
 │   │   ├── pipeline/        # Processing pipeline orchestration
 │   │   ├── cli/             # Command-line interface
 │   │   └── index.ts         # Entry point
@@ -85,7 +85,7 @@ sermon-summary/
 ### Prerequisites
 
 - Node.js 20+
-- FFmpeg installed and available in PATH
+- yt-dlp installed (`pip install yt-dlp` or `brew install yt-dlp`)
 - OpenAI API key
 - Anthropic API key
 - Supabase project (for storage and web app)
@@ -111,6 +111,7 @@ CREATE TABLE sermons (
   action_items_id TEXT[] NOT NULL,
   reflection_questions_en TEXT[] NOT NULL,
   reflection_questions_id TEXT[] NOT NULL,
+  youtube_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -169,18 +170,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 ```bash
 cd backend
-npx tsx src/index.ts -i /path/to/sermon.mp4 --save
+npx tsx src/index.ts -i "https://youtube.com/watch?v=xxx" --save
 ```
 
 **Options:**
 
-| Flag                 | Description                                |
-| -------------------- | ------------------------------------------ |
-| `-i, --input <file>` | Input video or audio file (required)       |
-| `--keep-audio`       | Keep extracted audio file after processing |
-| `--save`             | Save summary to Supabase                   |
+| Flag               | Description                          |
+| ------------------ | ------------------------------------ |
+| `-i, --input <url>` | YouTube URL (required)              |
+| `--save`           | Save summary to Supabase             |
 
-> **Note:** Sermon titles are automatically generated by Claude based on the content.
+> **Note:** Sermon titles are automatically generated by Claude based on the content. The YouTube URL is saved to the database for linking in the web app.
 
 ### Running the Web App
 

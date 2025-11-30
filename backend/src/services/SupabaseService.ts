@@ -14,7 +14,10 @@ export class SupabaseService {
     this.client = createClient(url, serviceRoleKey);
   }
 
-  async save(summary: BilingualSummary): Promise<SavedSermon> {
+  async save(
+    summary: BilingualSummary,
+    youtubeUrl?: string,
+  ): Promise<SavedSermon> {
     const { data, error } = await this.client
       .from("sermons")
       .insert({
@@ -32,6 +35,7 @@ export class SupabaseService {
         action_items_id: summary.id.actionItems,
         reflection_questions_en: summary.en.reflectionQuestions,
         reflection_questions_id: summary.id.reflectionQuestions,
+        youtube_url: youtubeUrl || null,
       })
       .select("id, title_en, created_at")
       .single();

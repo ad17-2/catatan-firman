@@ -15,12 +15,6 @@ export class ConfigurationError extends AppError {
   }
 }
 
-export class AudioExtractionError extends AppError {
-  constructor(message: string, cause?: Error) {
-    super(message, "AUDIO_ERROR", cause);
-  }
-}
-
 export class TranscriptionError extends AppError {
   constructor(message: string, cause?: Error) {
     super(message, "TRANSCRIPTION_ERROR", cause);
@@ -36,6 +30,12 @@ export class SummarizationError extends AppError {
 export class ValidationError extends AppError {
   constructor(message: string, cause?: Error) {
     super(message, "VALIDATION_ERROR", cause);
+  }
+}
+
+export class YouTubeDownloadError extends AppError {
+  constructor(message: string, cause?: Error) {
+    super(message, "YOUTUBE_DOWNLOAD_ERROR", cause);
   }
 }
 

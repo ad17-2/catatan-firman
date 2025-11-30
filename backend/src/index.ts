@@ -39,10 +39,7 @@ async function main(): Promise<void> {
   try {
     const config = loadConfig();
     const pipeline = new Pipeline(config, consoleLogger);
-    const result = await pipeline.execute(
-      { inputPath: args.input },
-      { keepAudio: args.keepAudio },
-    );
+    const result = await pipeline.execute({ inputPath: args.input });
 
     printSummary(result.summary);
 
@@ -52,7 +49,7 @@ async function main(): Promise<void> {
         config.supabase.url,
         config.supabase.serviceRoleKey,
       );
-      const saved = await supabase.save(result.summary);
+      const saved = await supabase.save(result.summary, result.youtubeUrl);
       consoleLogger.info(`Saved with ID: ${saved.id} (${saved.title_en})`);
     }
   } catch (error) {
