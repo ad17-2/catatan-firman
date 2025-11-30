@@ -23,7 +23,7 @@ export const translations = {
       '"To Him be the glory forever and ever. Amen." — Galatians 1:5',
   },
   id: {
-    title: "Ringkasan Khotbah",
+    title: "Ringkasan Firman",
     subtitle:
       "Jelajahi ringkasan khotbah yang penuh makna, dilengkapi dengan poin-poin utama, referensi ayat, dan pertanyaan refleksi.",
     searchPlaceholder: "Cari khotbah...",
@@ -31,7 +31,7 @@ export const translations = {
     noResults: "Tidak ada khotbah ditemukan",
     noSermons: "Belum ada khotbah",
     noResultsHint: "Coba sesuaikan kata pencarian",
-    noSermonsHint: "Ringkasan khotbah akan muncul di sini",
+    noSermonsHint: "Ringkasan firman akan muncul di sini",
     summary: "Ringkasan",
     keyPoints: "Poin Utama",
     bibleVerses: "Ayat Alkitab",
