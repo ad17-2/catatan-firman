@@ -81,14 +81,75 @@ export function SermonDetail({ sermon: rawSermon }: SermonDetailProps) {
 
           {/* Title */}
           <h1
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-8 animate-fade-in-up"
+            className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6 animate-fade-in-up"
             style={{ color: "var(--color-ink)" }}
           >
             {sermon.title}
           </h1>
 
+          {/* YouTube Video Link */}
+          {rawSermon.youtube_url && (
+            <a
+              href={rawSermon.youtube_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 mb-8 opacity-0 animate-fade-in-up stagger-1"
+            >
+              {/* Play button with decorative ring */}
+              <span className="relative flex items-center justify-center">
+                {/* Outer decorative ring */}
+                <span
+                  className="absolute w-12 h-12 rounded-full border-2 opacity-30 group-hover:opacity-60 group-hover:scale-110 transition-all duration-500"
+                  style={{ borderColor: "var(--color-gold)" }}
+                />
+                {/* Inner circle with play icon */}
+                <span
+                  className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-105"
+                  style={{ backgroundColor: "var(--color-sage)" }}
+                >
+                  <svg
+                    className="w-4 h-4 ml-0.5 transition-transform duration-300 group-hover:scale-110"
+                    fill="var(--color-cream)"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              </span>
+              {/* Text */}
+              <span className="flex flex-col">
+                <span
+                  className="font-serif text-base font-medium tracking-wide transition-colors duration-300 group-hover:text-[var(--color-sage-dark)]"
+                  style={{ color: "var(--color-sage)" }}
+                >
+                  {t.watchVideo}
+                </span>
+                <span
+                  className="text-xs font-body tracking-wider uppercase transition-colors duration-300"
+                  style={{ color: "var(--color-ink-lighter)" }}
+                >
+                  YouTube
+                </span>
+              </span>
+              {/* External link indicator */}
+              <svg
+                className="w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-300"
+                fill="none"
+                stroke="var(--color-ink-lighter)"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                />
+              </svg>
+            </a>
+          )}
+
           {/* Decorative divider */}
-          <div className="flex items-center gap-4 opacity-0 animate-fade-in-up stagger-1">
+          <div className="flex items-center gap-4 opacity-0 animate-fade-in-up stagger-2">
             <div
               className="flex-1 h-px"
               style={{ backgroundColor: "var(--color-parchment)" }}

@@ -18,6 +18,7 @@ export const translations = {
     backToAll: "Back to all sermons",
     readMore: "Read full summary",
     more: "more",
+    watchVideo: "Watch the Video",
     footerVerse:
       '"To Him be the glory forever and ever. Amen." — Galatians 1:5',
   },
@@ -40,6 +41,7 @@ export const translations = {
     backToAll: "Kembali ke semua khotbah",
     readMore: "Baca selengkapnya",
     more: "lagi",
+    watchVideo: "Tonton Video",
     footerVerse:
       '"Bagi Dialah kemuliaan sampai selama-lamanya. Amin." — Galatia 1:5',
   },

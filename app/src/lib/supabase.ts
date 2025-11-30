@@ -22,6 +22,7 @@ export interface SermonRaw {
   action_items_id: string[];
   reflection_questions_en: string[];
   reflection_questions_id: string[];
+  youtube_url: string | null;
   created_at: string;
 }
 
