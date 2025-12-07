@@ -28,8 +28,19 @@ function useLocalStorageLanguage(): Language {
   }, []);
 
   const getSnapshot = useCallback((): Language => {
+    // 1. Check localStorage (user's explicit choice)
     const saved = localStorage.getItem("lang");
-    return saved === "id" ? "id" : "en";
+    if (saved === "id" || saved === "en") return saved;
+
+    // 2. Check geo-lang cookie (Netlify geo detection)
+    const cookies = document.cookie.split(";");
+    const geoLang = cookies
+      .find((c) => c.trim().startsWith("geo-lang="))
+      ?.split("=")[1];
+    if (geoLang === "id") return "id";
+
+    // 3. Default to English
+    return "en";
   }, []);
 
   const getServerSnapshot = useCallback((): Language => "en", []);
