@@ -1,136 +1,117 @@
-# Sermon Summary
+# Catatan Firman
 
-An end-to-end pipeline for transcribing and summarizing sermon videos from YouTube, with a bilingual web application for browsing and searching summaries.
+An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a bilingual web application for browsing and searching summaries.
+
+## Screenshots
+
+> Add screenshots here
 
 ## Overview
 
 This project automates the process of converting YouTube sermon videos into structured, searchable summaries in both English and Indonesian. It consists of two main components:
 
-1. **CLI Backend** — Downloads from YouTube, transcribes using OpenAI Whisper, and generates bilingual summaries using Claude
-2. **Web Application** — A Next.js app for viewing and searching sermon summaries with language toggle
+1. **CLI Backend** — Downloads YouTube audio, transcribes using OpenAI Whisper, and generates bilingual summaries using Anthropic Claude
+2. **Next.js Frontend** — Server-rendered web app for viewing and searching sermon summaries with direct MySQL access
+
+## Architecture
 
 ```mermaid
 flowchart LR
     A[YouTube URL] --> B[CLI Backend]
-    B --> C[(Supabase)]
+    B --> C[(MySQL)]
     C --> D[Next.js App]
 
-    subgraph B[CLI Backend]
-        B1[yt-dlp] --> B2[Whisper]
-        B2 --> B3[Claude]
+    subgraph B[CLI Backend Pipeline]
+        B1[yt-dlp] --> B2[Whisper API]
+        B2 --> B3[Claude API]
+        B3 --> B4[MySQL]
     end
 
-    subgraph D[Next.js App]
-        D1[EN] -.-> D2[Toggle]
-        D2 -.-> D3[ID]
+    subgraph D[Next.js Frontend]
+        D1[Server Components] --> D2[MySQL Pool]
+        D2 --> D3[Full-text Search]
     end
 ```
+
+The backend processes videos offline via CLI, while the frontend reads directly from MySQL using Next.js server components for optimal performance and security.
 
 ## Features
 
 ### CLI Backend
 
-- **YouTube Integration** — Downloads audio directly from YouTube URLs via yt-dlp
-- **Transcription** — Accurate Indonesian transcription via OpenAI Whisper
-- **Bilingual Summaries** — Generates both English and Indonesian summaries in a single run
+- **YouTube Integration** — Downloads audio directly from YouTube URLs using yt-dlp (security: uses `execFile` to prevent shell injection)
+- **Transcription** — Accurate Indonesian transcription via OpenAI Whisper API
+- **Bilingual Summaries** — Generates both English and Indonesian summaries in a single run using Claude's structured outputs
 - **Auto-Generated Titles** — Claude generates appropriate titles from sermon content
-- **Database Storage** — Persistence to Supabase with dual-language columns and YouTube link
+- **Structured Data** — Extracts key points, Bible verses, quotes, action items, and reflection questions
+- **Database Storage** — Persistence to MySQL with bilingual columns and YouTube link
 
-### Web Application
+### Next.js Frontend
 
-- **Language Toggle** — Switch between English and Indonesian with localStorage persistence
-- **Bilingual Search** — Full-text search using language-specific indexes
-- **YouTube Links** — Direct links to original sermon videos
+- **Server-Side Rendering** — Fast initial page loads with React Server Components
+- **Direct MySQL Access** — No API layer, uses connection pooling for efficiency
+- **Full-Text Search** — MySQL FULLTEXT indexes for fast bilingual search
+- **Input Validation** — Sanitizes search terms and validates ID parameters
+- **Security Headers** — Comprehensive CSP, X-Frame-Options, and other security headers
 - **Responsive Design** — Works seamlessly on desktop and mobile
-- **Beautiful UI** — Editorial-inspired design with elegant typography
+- **Beautiful Typography** — Editorial-inspired design with Fraunces and Newsreader fonts
 
 ## Tech Stack
 
-| Component     | Technology              |
-| ------------- | ----------------------- |
-| CLI Runtime   | Node.js, TypeScript     |
-| YouTube DL    | yt-dlp                  |
-| Transcription | OpenAI Whisper API      |
-| Summarization | Claude (Anthropic)      |
-| Database      | Supabase (PostgreSQL)   |
-| Web Framework | Next.js 16 (App Router) |
-| Styling       | Tailwind CSS            |
-| Deployment    | Netlify                 |
+| Component | Technology |
+|-----------|------------|
+| **Frontend Framework** | Next.js 16 (App Router) |
+| **Frontend UI** | React 19, Tailwind CSS 4 |
+| **Backend Runtime** | Node.js, TypeScript |
+| **Database** | MySQL 8.0+ |
+| **YouTube Download** | yt-dlp |
+| **Transcription** | OpenAI Whisper API |
+| **Summarization** | Anthropic Claude (claude-sonnet-4-5) |
+| **Schema Validation** | Zod |
+| **CLI Framework** | Commander.js |
 
-## Project Structure
-
-```
-sermon-summary/
-├── backend/                 # CLI application
-│   ├── src/
-│   │   ├── config/          # Configuration management
-│   │   ├── services/        # Core services (YouTube, Transcription, Summarization, Supabase)
-│   │   ├── pipeline/        # Processing pipeline orchestration
-│   │   ├── cli/             # Command-line interface
-│   │   └── index.ts         # Entry point
-│   └── package.json
-│
-├── app/                     # Next.js web application
-│   ├── src/
-│   │   ├── app/             # App Router pages
-│   │   ├── components/      # React components
-│   │   └── lib/             # Utilities and Supabase client
-│   └── package.json
-│
-└── netlify.toml             # Deployment configuration
-```
-
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js 20+
+- MySQL 8.0+
 - yt-dlp installed (`pip install yt-dlp` or `brew install yt-dlp`)
 - OpenAI API key
 - Anthropic API key
-- Supabase project (for storage and web app)
 
-### Database Setup
+## Database Setup
 
-Create the `sermons` table in your Supabase project:
+Create the `catatan-firman` database and `sermons` table in MySQL:
 
 ```sql
-CREATE TABLE sermons (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title_en TEXT NOT NULL,
-  title_id TEXT NOT NULL,
-  summary_en TEXT NOT NULL,
-  summary_id TEXT NOT NULL,
-  key_points_en TEXT[] NOT NULL,
-  key_points_id TEXT[] NOT NULL,
-  bible_verses_en TEXT[] NOT NULL,
-  bible_verses_id TEXT[] NOT NULL,
-  quotes_en TEXT[] NOT NULL,
-  quotes_id TEXT[] NOT NULL,
-  action_items_en TEXT[] NOT NULL,
-  action_items_id TEXT[] NOT NULL,
-  reflection_questions_en TEXT[] NOT NULL,
-  reflection_questions_id TEXT[] NOT NULL,
-  youtube_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+CREATE DATABASE IF NOT EXISTS `catatan-firman` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Full-text search for both languages
-ALTER TABLE sermons ADD COLUMN fts_en tsvector
-  GENERATED ALWAYS AS (to_tsvector('english', title_en || ' ' || summary_en)) STORED;
-ALTER TABLE sermons ADD COLUMN fts_id tsvector
-  GENERATED ALWAYS AS (to_tsvector('indonesian', title_id || ' ' || summary_id)) STORED;
+USE `catatan-firman`;
 
-CREATE INDEX sermons_fts_en_idx ON sermons USING GIN (fts_en);
-CREATE INDEX sermons_fts_id_idx ON sermons USING GIN (fts_id);
-
--- Enable Row Level Security
-ALTER TABLE sermons ENABLE ROW LEVEL SECURITY;
-
--- Allow public read access
-CREATE POLICY "Public read access" ON sermons
-  FOR SELECT USING (true);
+CREATE TABLE `sermons` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `title_en` TEXT NOT NULL,
+  `title_id` TEXT NOT NULL,
+  `summary_en` TEXT NOT NULL,
+  `summary_id` TEXT NOT NULL,
+  `key_points_en` JSON NOT NULL,
+  `key_points_id` JSON NOT NULL,
+  `bible_verses_en` JSON NOT NULL,
+  `bible_verses_id` JSON NOT NULL,
+  `quotes_en` JSON NOT NULL,
+  `quotes_id` JSON NOT NULL,
+  `action_items_en` JSON NOT NULL,
+  `action_items_id` JSON NOT NULL,
+  `reflection_questions_en` JSON NOT NULL,
+  `reflection_questions_id` JSON NOT NULL,
+  `youtube_url` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FULLTEXT INDEX `ft_title_summary_id` (`title_id`, `summary_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
+The FULLTEXT index enables fast search across Indonesian titles and summaries.
+
+## Setup
 
 ### Backend Setup
 
@@ -140,16 +121,33 @@ npm install
 cp .env.example .env
 ```
 
-Configure `.env`:
+Configure `backend/.env`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | Yes | OpenAI API key for Whisper transcription |
+| `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude summarization |
+| `MYSQL_HOST` | For `--save` | MySQL server hostname (default: localhost) |
+| `MYSQL_USER` | For `--save` | MySQL username (default: root) |
+| `MYSQL_PASSWORD` | For `--save` | MySQL password |
+| `MYSQL_DATABASE` | For `--save` | Database name (catatan-firman) |
+| `MYSQL_PORT` | For `--save` | MySQL port (default: 3306) |
+
+Example:
 
 ```env
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# Required only when using --save flag
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=catatan-firman
+MYSQL_PORT=3306
 ```
 
-### Web App Setup
+### Frontend Setup
 
 ```bash
 cd app
@@ -157,70 +155,192 @@ npm install
 cp .env.local.example .env.local
 ```
 
-Configure `.env.local`:
+Configure `app/.env.local`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MYSQL_HOST` | Yes | MySQL server hostname |
+| `MYSQL_USER` | Yes | MySQL username |
+| `MYSQL_PASSWORD` | Yes | MySQL password |
+| `MYSQL_DATABASE` | Yes | Database name (catatan-firman) |
+
+Example:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=catatan-firman
 ```
 
 ## Usage
 
-### Processing a Sermon
+### Processing a Sermon (CLI)
 
 ```bash
 cd backend
-npx tsx src/index.ts -i "https://youtube.com/watch?v=xxx" --save
+npm start -- -i "https://youtube.com/watch?v=xxx" --save
 ```
 
-**Options:**
+**Command-line Options:**
 
-| Flag               | Description                          |
-| ------------------ | ------------------------------------ |
-| `-i, --input <url>` | YouTube URL (required)              |
-| `--save`           | Save summary to Supabase             |
+| Flag | Description |
+|------|-------------|
+| `-i, --input <url>` | YouTube URL (required) |
+| `--save` | Save summary to MySQL database |
 
-> **Note:** Sermon titles are automatically generated by Claude based on the content. The YouTube URL is saved to the database for linking in the web app.
+**Example Output:**
 
-### Running the Web App
+```
+╔══════════════════════════════════════════════════════════════╗
+║  Catatan Firman — Sermon Transcription & Summarization      ║
+╚══════════════════════════════════════════════════════════════╝
+
+Input: https://youtube.com/watch?v=xxx
+
+Step 1: Downloading from YouTube...
+Duration: 45 minutes
+Step 2: Transcribing...
+Transcription: 12543 chars
+Step 3: Summarizing...
+Done!
+
+TITLE (EN): Walking in Faith During Uncertain Times
+TITLE (ID): Berjalan dalam Iman di Tengah Ketidakpastian
+
+...
+
+Saving to MySQL...
+Saved with ID: 1 (Walking in Faith During Uncertain Times)
+```
+
+### Running the Frontend
 
 ```bash
 cd app
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:3000](http://localhost:3000)
+
+**Production Build:**
+
+```bash
+cd app
+npm run build
+npm start
+```
+
+## Project Structure
+
+```
+catatan-firman/
+├── backend/                          # CLI application
+│   ├── src/
+│   │   ├── cli/                      # CLI parsing and output
+│   │   │   ├── args.ts               # Commander.js argument parsing
+│   │   │   ├── output.ts             # Console formatting
+│   │   │   └── index.ts
+│   │   ├── config/
+│   │   │   └── index.ts              # Environment variable validation
+│   │   ├── errors/
+│   │   │   └── index.ts              # Custom error types
+│   │   ├── pipeline/
+│   │   │   ├── Pipeline.ts           # Main orchestration
+│   │   │   └── index.ts
+│   │   ├── services/
+│   │   │   ├── prompts/
+│   │   │   │   └── summarization.ts  # Claude prompt templates
+│   │   │   ├── schemas/
+│   │   │   │   └── summary.ts        # Zod validation schemas
+│   │   │   ├── AudioService.ts       # Audio file cleanup
+│   │   │   ├── MysqlService.ts       # Database persistence
+│   │   │   ├── SummarizationService.ts  # Claude API client
+│   │   │   ├── TranscriptionService.ts  # Whisper API client
+│   │   │   ├── YouTubeService.ts     # yt-dlp wrapper
+│   │   │   └── index.ts
+│   │   ├── types/
+│   │   │   └── index.ts              # TypeScript type definitions
+│   │   └── index.ts                  # Entry point
+│   ├── package.json
+│   └── .env.example
+│
+├── app/                              # Next.js web application
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── [id]/
+│   │   │   │   └── page.tsx          # Sermon detail page
+│   │   │   ├── layout.tsx            # Root layout with fonts
+│   │   │   ├── page.tsx              # Homepage with search
+│   │   │   └── globals.css
+│   │   ├── components/
+│   │   │   ├── HomeContent.tsx       # Client-side search form
+│   │   │   └── SermonDetail.tsx      # Sermon display
+│   │   └── lib/
+│   │       ├── db.ts                 # MySQL client (server-only)
+│   │       └── types.ts              # Shared types
+│   ├── next.config.ts                # Security headers
+│   ├── package.json
+│   └── .env.local
+│
+└── README.md
+```
 
 ## Summary Output Structure
 
 The AI generates bilingual structured summaries (English + Indonesian) with the following sections:
 
-| Section                  | Description                                  |
-| ------------------------ | -------------------------------------------- |
-| **Title**                | Auto-generated title from sermon content     |
-| **Summary**              | 2-3 paragraph executive summary              |
-| **Key Points**           | 5-7 main takeaways                           |
-| **Bible Verses**         | Scripture references with context            |
-| **Quotes**               | Notable quotes from the speaker (verbatim)   |
-| **Action Items**         | Practical application steps                  |
-| **Reflection Questions** | Questions for personal reflection/discussion |
+| Section | Description |
+|---------|-------------|
+| **Title** | Auto-generated title from sermon content (3-8 words) |
+| **Summary** | 2-3 paragraph executive summary capturing main theme and key takeaways |
+| **Key Points** | 5-7 main takeaways including core teachings and illustrations |
+| **Bible Verses** | Scripture references with brief context (empty if none mentioned) |
+| **Quotes** | 2-4 notable quotes from the speaker (verbatim, in original language) |
+| **Action Items** | 3-5 specific, actionable steps listeners can apply |
+| **Reflection Questions** | 2-3 thought-provoking questions for reflection or discussion |
 
 Each section is generated in both English and Indonesian, stored in separate database columns (e.g., `title_en`, `title_id`).
 
-## Deployment
+## Security Features
 
-The web application is configured for Netlify deployment. Push to your repository and connect to Netlify, or deploy manually:
+### Backend
+
+- **Shell Injection Prevention** — Uses `execFile` instead of `exec` for yt-dlp execution
+- **Input Validation** — YouTube URL validation before processing
+- **Parameterized Queries** — All database queries use prepared statements
+- **Error Boundaries** — Custom error types with error wrapping
+
+### Frontend
+
+- **Server-Only Database Access** — MySQL client marked with `server-only` package
+- **Content Security Policy** — Strict CSP with minimal inline script allowances
+- **Security Headers** — X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **Input Sanitization** — Search query sanitization removes MySQL special characters
+- **ID Validation** — Integer validation and bounds checking for sermon IDs
+- **Connection Pooling** — Limited connection pool size prevents resource exhaustion
+
+## Development
+
+### Backend
+
+```bash
+cd backend
+npm run dev  # Watch mode with tsx
+```
+
+### Frontend
 
 ```bash
 cd app
-npm run build
+npm run dev    # Development server with hot reload
+npm run lint   # ESLint
 ```
-
-Required environment variables on Netlify:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## License
 
 MIT
+
+---
+
+**Demo:** [https://catatan-firman.netlify.app/](https://catatan-firman.netlify.app/)
