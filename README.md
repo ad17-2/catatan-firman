@@ -2,10 +2,6 @@
 
 An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a web application for browsing and searching summaries.
 
-## Screenshots
-
-> Add screenshots here
-
 ## Overview
 
 This project automates the process of converting YouTube sermon videos into structured, searchable summaries. It consists of two main components:
