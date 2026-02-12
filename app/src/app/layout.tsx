@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Crimson_Pro } from "next/font/google";
-import { LanguageProvider } from "@/lib/language-context";
+import { Fraunces, Newsreader } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  axes: ["opsz"],
   style: ["normal", "italic"],
-  variable: "--font-serif",
+  variable: "--font-display",
   display: "swap",
 });
 
-const crimson = Crimson_Pro({
+const newsreader = Newsreader({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
   variable: "--font-body",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Sermon Summaries",
-  description: "Browse and search sermon summaries",
+  title: "Catatan Firman",
+  description:
+    "Catatan dan ringkasan khotbah dilengkapi poin utama, ayat Alkitab, dan pertanyaan refleksi.",
 };
 
 export default function RootLayout({
@@ -30,12 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${crimson.variable}`}>
+    <html lang="id" className={`${fraunces.variable} ${newsreader.variable}`}>
       <body
-        className="antialiased"
-        style={{ fontFamily: "var(--font-body), Georgia, serif" }}
+        className="antialiased font-body"
       >
-        <LanguageProvider>{children}</LanguageProvider>
+        {children}
       </body>
     </html>
   );

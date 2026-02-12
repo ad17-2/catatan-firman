@@ -2,10 +2,10 @@ import "dotenv/config";
 import {
   loadConfig,
   validateConfig,
-  validateSupabaseConfig,
+  validateMysqlConfig,
 } from "./config/index.js";
 import { Pipeline } from "./pipeline/index.js";
-import { SupabaseService } from "./services/SupabaseService.js";
+import { MysqlService } from "./services/MysqlService.js";
 import {
   parseArgs,
   printHeader,
@@ -25,10 +25,10 @@ async function main(): Promise<void> {
   }
 
   if (args.save) {
-    const supabaseValidation = validateSupabaseConfig();
-    if (!supabaseValidation.isValid) {
+    const mysqlValidation = validateMysqlConfig();
+    if (!mysqlValidation.isValid) {
       printError(
-        "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when using --save",
+        "MYSQL_HOST and MYSQL_DATABASE are required when using --save",
       );
       process.exit(1);
     }
@@ -36,6 +36,7 @@ async function main(): Promise<void> {
 
   printHeader(args.input);
 
+  let mysqlService: MysqlService | null = null;
   try {
     const config = loadConfig();
     const pipeline = new Pipeline(config, consoleLogger);
@@ -43,13 +44,10 @@ async function main(): Promise<void> {
 
     printSummary(result.summary);
 
-    if (args.save && config.supabase) {
-      consoleLogger.info("\nSaving to Supabase...");
-      const supabase = new SupabaseService(
-        config.supabase.url,
-        config.supabase.serviceRoleKey,
-      );
-      const saved = await supabase.save(result.summary, result.youtubeUrl);
+    if (args.save && config.mysql) {
+      consoleLogger.info("\nSaving to MySQL...");
+      mysqlService = new MysqlService(config.mysql);
+      const saved = await mysqlService.save(result.summary, result.youtubeUrl);
       consoleLogger.info(`Saved with ID: ${saved.id} (${saved.title_en})`);
     }
   } catch (error) {
@@ -59,6 +57,8 @@ async function main(): Promise<void> {
         : String(error),
     );
     process.exit(1);
+  } finally {
+    await mysqlService?.close();
   }
 }
 

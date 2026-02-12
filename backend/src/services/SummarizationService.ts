@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import type { AppConfig } from "../config/index.js";
 import type { BilingualSummary } from "../types/index.js";
 import { SummarizationError, wrapError } from "../errors/index.js";
@@ -20,42 +20,32 @@ export class SummarizationService implements ISummarizationService {
     this.model = config.model;
   }
 
-  /**
-   * Generate bilingual summary from transcript using structured outputs
-   */
   async summarize(transcript: string): Promise<BilingualSummary> {
     try {
-      // Use $refStrategy: "none" to inline all definitions instead of using $ref
-      const jsonSchema = zodToJsonSchema(BilingualSummarySchema, {
-        name: "BilingualSummary",
-        $refStrategy: "none",
-      }) as { definitions?: Record<string, unknown> };
-      // Extract the actual schema from definitions (zodToJsonSchema creates a $ref wrapper)
-      const schema = jsonSchema.definitions?.BilingualSummary || jsonSchema;
+      const schema = z.toJSONSchema(BilingualSummarySchema);
 
-      // Using beta API with structured outputs
-      // Type assertion needed as SDK types may lag behind API
-      const response = await (this.client.beta.messages.create as Function)({
-        model: this.model,
-        max_tokens: this.maxTokens,
-        system: SYSTEM_PROMPT,
-        betas: ["structured-outputs-2025-11-13"],
-        messages: [
-          {
-            role: "user",
-            content: buildUserPrompt(transcript),
-          },
-        ],
-        output_format: {
-          type: "json_schema",
-          schema,
+      const response = await this.client.messages.create(
+        {
+          model: this.model,
+          max_tokens: this.maxTokens,
+          system: SYSTEM_PROMPT,
+          messages: [
+            {
+              role: "user",
+              content: buildUserPrompt(transcript),
+            },
+          ],
         },
-      });
-
-      const textBlock = response.content?.find(
-        (block: { type: string }) => block.type === "text",
+        {
+          headers: { "anthropic-beta": "structured-outputs-2025-11-13" },
+          body: { output_format: { type: "json_schema", schema } },
+        },
       );
-      const text = textBlock?.text || "";
+
+      const textBlock = response.content.find(
+        (block) => block.type === "text",
+      );
+      const text = textBlock && "text" in textBlock ? textBlock.text : "";
       const parsed = BilingualSummarySchema.parse(JSON.parse(text));
 
       return {

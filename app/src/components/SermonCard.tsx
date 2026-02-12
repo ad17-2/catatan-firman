@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Sermon } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation } from "@/lib/translations";
+import type { Sermon } from "@/lib/types";
 
 interface SermonCardProps {
   sermon: Sermon;
@@ -11,22 +9,14 @@ interface SermonCardProps {
 }
 
 export function SermonCard({ sermon, index }: SermonCardProps) {
-  const { lang } = useLanguage();
-  const t = getTranslation(lang);
-
   const formattedDate = new Date(sermon.created_at).toLocaleDateString(
-    lang === "id" ? "id-ID" : "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    },
+    "id-ID",
+    { year: "numeric", month: "long", day: "numeric" },
   );
 
-  // Truncate summary to ~150 chars
   const truncatedSummary =
-    sermon.summary.length > 150
-      ? sermon.summary.substring(0, 150).trim() + "..."
+    sermon.summary.length > 180
+      ? sermon.summary.substring(0, 180).trim() + "..."
       : sermon.summary;
 
   return (
@@ -35,113 +25,99 @@ export function SermonCard({ sermon, index }: SermonCardProps) {
       className={`group block opacity-0 animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
     >
       <article
-        className="relative h-full rounded-lg overflow-hidden transition-all duration-500 ease-out group-hover:-translate-y-1"
+        className="relative h-full border rounded-xl overflow-hidden transition-all duration-500 ease-out group-hover:-translate-y-0.5"
         style={{
-          backgroundColor: "var(--color-ivory)",
-          boxShadow: "var(--shadow-soft)",
+          backgroundColor: "var(--color-warm-white)",
+          borderColor: "var(--color-border)",
+          boxShadow: "var(--shadow-sm)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+          e.currentTarget.style.borderColor = "var(--color-terracotta-light)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+          e.currentTarget.style.borderColor = "var(--color-border)";
         }}
       >
-        {/* Hover shadow effect */}
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg"
-          style={{ boxShadow: "var(--shadow-elevated)" }}
-        />
+        <div className="p-7 md:p-8">
+          <div className="flex items-center gap-3 mb-5">
+            <time
+              className="text-xs font-body font-medium tracking-widest uppercase"
+              style={{ color: "var(--color-ink-muted)" }}
+            >
+              {formattedDate}
+            </time>
+            {sermon.youtube_url && (
+              <>
+                <span
+                  className="w-1 h-1 rounded-full"
+                  style={{ backgroundColor: "var(--color-ink-muted)" }}
+                />
+                <span
+                  className="text-xs font-body tracking-wider uppercase"
+                  style={{ color: "var(--color-ink-muted)" }}
+                >
+                  Video
+                </span>
+              </>
+            )}
+          </div>
 
-        {/* Top accent line */}
-        <div
-          className="absolute top-0 left-0 right-0 h-1 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
-          style={{
-            background:
-              "linear-gradient(90deg, var(--color-sage) 0%, var(--color-gold) 100%)",
-          }}
-        />
-
-        <div className="relative p-8">
-          {/* Date */}
-          <time
-            className="block text-sm tracking-widest uppercase mb-4 font-body"
-            style={{ color: "var(--color-ink-lighter)" }}
-          >
-            {formattedDate}
-          </time>
-
-          {/* Title */}
           <h2
-            className="font-serif text-2xl font-semibold mb-4 leading-tight transition-colors duration-300"
+            className="font-display text-xl md:text-2xl font-600 mb-4 leading-snug transition-colors duration-300 group-hover:text-[var(--color-terracotta)]"
             style={{ color: "var(--color-ink)" }}
           >
-            <span className="group-hover:text-[var(--color-sage-dark)] transition-colors duration-300">
-              {sermon.title}
-            </span>
+            {sermon.title}
           </h2>
 
-          {/* Summary preview */}
           <p
-            className="font-body text-base leading-relaxed mb-6"
-            style={{ color: "var(--color-ink-light)" }}
+            className="font-body text-[15px] leading-relaxed mb-6"
+            style={{ color: "var(--color-ink-secondary)" }}
           >
             {truncatedSummary}
           </p>
 
-          {/* Key points preview */}
-          {sermon.key_points.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {sermon.key_points.slice(0, 2).map((point, i) => (
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {sermon.key_points.slice(0, 3).map((_, i) => (
                 <span
                   key={i}
-                  className="inline-block px-3 py-1 rounded-full text-sm font-body"
-                  style={{
-                    backgroundColor: "var(--color-parchment)",
-                    color: "var(--color-ink-light)",
-                  }}
-                >
-                  {point.length > 40 ? point.substring(0, 40) + "..." : point}
-                </span>
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: "var(--color-terracotta)", opacity: 1 - i * 0.25 }}
+                />
               ))}
-              {sermon.key_points.length > 2 && (
+              {sermon.key_points.length > 3 && (
                 <span
-                  className="inline-block px-3 py-1 rounded-full text-sm font-body"
-                  style={{
-                    backgroundColor: "var(--color-parchment)",
-                    color: "var(--color-ink-lighter)",
-                  }}
+                  className="text-[11px] font-body ml-1"
+                  style={{ color: "var(--color-ink-muted)" }}
                 >
-                  +{sermon.key_points.length - 2} {t.more}
+                  {sermon.key_points.length} poin
                 </span>
               )}
             </div>
-          )}
 
-          {/* Read more indicator */}
-          <div
-            className="flex items-center gap-2 font-serif text-sm font-medium tracking-wide"
-            style={{ color: "var(--color-sage)" }}
-          >
-            <span>{t.readMore}</span>
-            <svg
-              className="w-4 h-4 transform group-hover:translate-x-2 transition-transform duration-300"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
+            <span
+              className="inline-flex items-center gap-1.5 text-xs font-display font-500 tracking-wide transition-colors duration-300 group-hover:text-[var(--color-terracotta)]"
+              style={{ color: "var(--color-ink-muted)" }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
+              Baca
+              <svg
+                className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform duration-300"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17 8l4 4m0 0l-4 4m4-4H3"
+                />
+              </svg>
+            </span>
           </div>
         </div>
-
-        {/* Corner decorative element */}
-        <div
-          className="absolute bottom-0 right-0 w-16 h-16 opacity-5"
-          style={{
-            background:
-              "radial-gradient(circle at bottom right, var(--color-sage) 0%, transparent 70%)",
-          }}
-        />
       </article>
     </Link>
   );

@@ -1,8 +1,10 @@
+import type { MysqlConfig } from "../services/MysqlService.js";
+
 export interface AppConfig {
   openai: { apiKey: string };
   anthropic: { apiKey: string; model: string };
   whisper: { model: string; language: string };
-  supabase: { url: string; serviceRoleKey: string } | null;
+  mysql: MysqlConfig | null;
 }
 
 const REQUIRED_KEYS = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"] as const;
@@ -12,15 +14,15 @@ export function validateConfig() {
   return { isValid: missing.length === 0, missingKeys: missing };
 }
 
-export function validateSupabaseConfig() {
-  const hasUrl = !!process.env.SUPABASE_URL;
-  const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return { isValid: hasUrl && hasKey, hasUrl, hasKey };
+export function validateMysqlConfig() {
+  const hasHost = !!process.env.MYSQL_HOST;
+  const hasDatabase = !!process.env.MYSQL_DATABASE;
+  return { isValid: hasHost && hasDatabase, hasHost, hasDatabase };
 }
 
 export function loadConfig(): AppConfig {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const mysqlHost = process.env.MYSQL_HOST;
+  const mysqlDatabase = process.env.MYSQL_DATABASE;
 
   return {
     openai: { apiKey: process.env.OPENAI_API_KEY! },
@@ -29,9 +31,17 @@ export function loadConfig(): AppConfig {
       model: "claude-sonnet-4-5",
     },
     whisper: { model: "whisper-1", language: "id" },
-    supabase:
-      supabaseUrl && supabaseKey
-        ? { url: supabaseUrl, serviceRoleKey: supabaseKey }
+    mysql:
+      mysqlHost && mysqlDatabase
+        ? {
+            host: mysqlHost,
+            user: process.env.MYSQL_USER || "root",
+            password: process.env.MYSQL_PASSWORD || "",
+            database: mysqlDatabase,
+            port: process.env.MYSQL_PORT
+              ? parseInt(process.env.MYSQL_PORT, 10)
+              : 3306,
+          }
         : null,
   };
 }

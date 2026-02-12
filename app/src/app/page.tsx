@@ -1,4 +1,4 @@
-import { getSermons } from "@/lib/supabase";
+import { getSermons } from "@/lib/db";
 import { HomeContent } from "@/components/HomeContent";
 
 interface HomeProps {

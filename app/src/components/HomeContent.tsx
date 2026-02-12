@@ -1,93 +1,90 @@
 "use client";
 
 import { Suspense } from "react";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation } from "@/lib/translations";
-import { getLocalizedSermon, type SermonRaw } from "@/lib/supabase";
+import type { Sermon } from "@/lib/types";
 import { SermonCard } from "./SermonCard";
 import { SearchBar } from "./SearchBar";
-import { LanguageToggle } from "./LanguageToggle";
 
 interface HomeContentProps {
-  sermons: SermonRaw[];
+  sermons: Sermon[];
   searchQuery?: string;
 }
 
 export function HomeContent({ sermons, searchQuery }: HomeContentProps) {
-  const { lang } = useLanguage();
-  const t = getTranslation(lang);
-
-  const localizedSermons = sermons.map((s) => getLocalizedSermon(s, lang));
-
   return (
     <main className="min-h-screen">
-      {/* Header */}
       <header className="relative overflow-hidden">
-        {/* Decorative background */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, var(--color-sage) 0%, transparent 50%),
-                              radial-gradient(circle at 80% 50%, var(--color-gold) 0%, transparent 50%)`,
+            background: `
+              radial-gradient(ellipse 80% 60% at 20% 100%, rgba(181, 86, 63, 0.06) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 85% 10%, rgba(44, 62, 107, 0.04) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 40% at 50% 50%, rgba(196, 149, 42, 0.03) 0%, transparent 50%)
+            `,
           }}
         />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-24">
-          {/* Language Toggle - top right */}
-          <div className="absolute top-6 right-6 animate-fade-in">
-            <LanguageToggle />
+        <div className="relative max-w-5xl mx-auto px-6 pt-16 pb-12 md:pt-28 md:pb-16">
+          <div className="animate-fade-in mb-10 md:mb-14">
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className="h-px flex-1 max-w-[40px] animate-draw-line"
+                style={{ backgroundColor: "var(--color-terracotta)" }}
+              />
+              <span
+                className="text-[11px] font-body font-medium tracking-[0.2em] uppercase"
+                style={{ color: "var(--color-terracotta)" }}
+              >
+                Khotbah &middot; Ringkasan &middot; Refleksi
+              </span>
+              <div
+                className="h-px flex-1 max-w-[40px] animate-draw-line"
+                style={{ backgroundColor: "var(--color-terracotta)" }}
+              />
+            </div>
           </div>
 
-          {/* Decorative line */}
-          <div className="flex items-center justify-center gap-4 mb-8 animate-fade-in">
-            <div
-              className="h-px w-12"
-              style={{ backgroundColor: "var(--color-sage-light)" }}
-            />
-            <div
-              className="w-2 h-2 rotate-45"
-              style={{ backgroundColor: "var(--color-gold)" }}
-            />
-            <div
-              className="h-px w-12"
-              style={{ backgroundColor: "var(--color-sage-light)" }}
-            />
-          </div>
-
-          {/* Title */}
           <h1
-            className="font-serif text-5xl md:text-6xl lg:text-7xl text-center font-semibold mb-6 animate-fade-in-up"
+            className="font-display text-5xl md:text-7xl lg:text-8xl font-700 tracking-tight text-center mb-5 animate-fade-in-up"
             style={{ color: "var(--color-ink)" }}
           >
-            {t.title}
+            Catatan{" "}
+            <em
+              className="not-italic"
+              style={{ color: "var(--color-terracotta)" }}
+            >
+              Firman
+            </em>
           </h1>
 
-          {/* Subtitle */}
           <p
-            className="font-body text-xl text-center max-w-2xl mx-auto mb-12 opacity-0 animate-fade-in-up stagger-1"
-            style={{ color: "var(--color-ink-light)" }}
+            className="font-body text-lg md:text-xl text-center max-w-xl mx-auto mb-12 opacity-0 animate-fade-in-up stagger-1"
+            style={{
+              color: "var(--color-ink-secondary)",
+              lineHeight: 1.7,
+            }}
           >
-            {t.subtitle}
+            Ringkasan khotbah yang penuh makna, dilengkapi poin utama,
+            ayat Alkitab, dan pertanyaan refleksi.
           </p>
 
-          {/* Search */}
           <div className="opacity-0 animate-fade-in-up stagger-2">
-            <Suspense fallback={<div className="h-14" />}>
+            <Suspense fallback={<div className="h-12" />}>
               <SearchBar />
             </Suspense>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
+      <section className="max-w-5xl mx-auto px-6 pt-10 pb-24">
         {searchQuery && (
           <div className="mb-8 animate-fade-in">
             <p
-              className="font-body text-lg"
-              style={{ color: "var(--color-ink-light)" }}
+              className="font-body text-base"
+              style={{ color: "var(--color-ink-secondary)" }}
             >
-              {t.showingResults}{" "}
+              Menampilkan hasil untuk{" "}
               <span
                 className="font-medium"
                 style={{ color: "var(--color-ink)" }}
@@ -98,16 +95,16 @@ export function HomeContent({ sermons, searchQuery }: HomeContentProps) {
           </div>
         )}
 
-        {localizedSermons.length === 0 ? (
-          <div className="text-center py-20 animate-fade-in">
+        {sermons.length === 0 ? (
+          <div className="text-center py-24 animate-fade-in">
             <div
-              className="inline-block w-16 h-16 mb-6 rounded-full"
-              style={{ backgroundColor: "var(--color-parchment)" }}
+              className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-2xl"
+              style={{ backgroundColor: "var(--color-terracotta-muted)" }}
             >
               <svg
-                className="w-16 h-16 p-4"
+                className="w-7 h-7"
                 fill="none"
-                stroke="var(--color-ink-lighter)"
+                stroke="var(--color-terracotta)"
                 strokeWidth="1.5"
                 viewBox="0 0 24 24"
               >
@@ -119,38 +116,44 @@ export function HomeContent({ sermons, searchQuery }: HomeContentProps) {
               </svg>
             </div>
             <h3
-              className="font-serif text-2xl mb-3"
+              className="font-display text-2xl font-600 mb-2"
               style={{ color: "var(--color-ink)" }}
             >
-              {searchQuery ? t.noResults : t.noSermons}
+              {searchQuery
+                ? "Tidak ada khotbah ditemukan"
+                : "Belum ada khotbah"}
             </h3>
             <p
-              className="font-body text-lg"
-              style={{ color: "var(--color-ink-light)" }}
+              className="font-body text-base"
+              style={{ color: "var(--color-ink-muted)" }}
             >
-              {searchQuery ? t.noResultsHint : t.noSermonsHint}
+              {searchQuery
+                ? "Coba sesuaikan kata pencarian"
+                : "Catatan firman akan muncul di sini"}
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {localizedSermons.map((sermon, index) => (
+          <div className="grid gap-6 md:grid-cols-2">
+            {sermons.map((sermon, index) => (
               <SermonCard key={sermon.id} sermon={sermon} index={index} />
             ))}
           </div>
         )}
       </section>
 
-      {/* Footer */}
-      <footer
-        className="border-t py-8"
-        style={{ borderColor: "var(--color-parchment)" }}
-      >
-        <div className="max-w-6xl mx-auto px-6 text-center">
+      <footer className="border-t py-10" style={{ borderColor: "var(--color-border)" }}>
+        <div className="max-w-5xl mx-auto px-6 text-center">
           <p
-            className="font-body text-sm"
-            style={{ color: "var(--color-ink-lighter)" }}
+            className="font-body text-sm italic"
+            style={{ color: "var(--color-ink-muted)" }}
           >
-            {t.footerVerse}
+            &ldquo;Bagi Dialah kemuliaan sampai selama-lamanya. Amin.&rdquo;
+          </p>
+          <p
+            className="font-body text-xs mt-1 tracking-wide"
+            style={{ color: "var(--color-ink-muted)" }}
+          >
+            Galatia 1:5
           </p>
         </div>
       </footer>
