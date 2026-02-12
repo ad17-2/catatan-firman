@@ -1,6 +1,6 @@
 # Catatan Firman
 
-An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a bilingual web application for browsing and searching summaries.
+An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a web application for browsing and searching summaries.
 
 ## Screenshots
 
@@ -8,9 +8,9 @@ An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos
 
 ## Overview
 
-This project automates the process of converting YouTube sermon videos into structured, searchable summaries in both English and Indonesian. It consists of two main components:
+This project automates the process of converting YouTube sermon videos into structured, searchable summaries. It consists of two main components:
 
-1. **CLI Backend** — Downloads YouTube audio, transcribes using OpenAI Whisper, and generates bilingual summaries using Anthropic Claude
+1. **CLI Backend** — Downloads YouTube audio, transcribes using OpenAI Whisper, and generates structured summaries using Anthropic Claude
 2. **Next.js Frontend** — Server-rendered web app for viewing and searching sermon summaries with direct MySQL access
 
 ## Architecture
@@ -41,16 +41,16 @@ The backend processes videos offline via CLI, while the frontend reads directly 
 
 - **YouTube Integration** — Downloads audio directly from YouTube URLs using yt-dlp (security: uses `execFile` to prevent shell injection)
 - **Transcription** — Accurate Indonesian transcription via OpenAI Whisper API
-- **Bilingual Summaries** — Generates both English and Indonesian summaries in a single run using Claude's structured outputs
+- **AI Summaries** — Generates structured Indonesian summaries using Claude's structured outputs
 - **Auto-Generated Titles** — Claude generates appropriate titles from sermon content
 - **Structured Data** — Extracts key points, Bible verses, quotes, action items, and reflection questions
-- **Database Storage** — Persistence to MySQL with bilingual columns and YouTube link
+- **Database Storage** — Persistence to MySQL with YouTube link
 
 ### Next.js Frontend
 
 - **Server-Side Rendering** — Fast initial page loads with React Server Components
 - **Direct MySQL Access** — No API layer, uses connection pooling for efficiency
-- **Full-Text Search** — MySQL FULLTEXT indexes for fast bilingual search
+- **Full-Text Search** — MySQL FULLTEXT indexes for fast Indonesian search
 - **Input Validation** — Sanitizes search terms and validates ID parameters
 - **Security Headers** — Comprehensive CSP, X-Frame-Options, and other security headers
 - **Responsive Design** — Works seamlessly on desktop and mobile
@@ -205,13 +205,12 @@ Transcription: 12543 chars
 Step 3: Summarizing...
 Done!
 
-TITLE (EN): Walking in Faith During Uncertain Times
-TITLE (ID): Berjalan dalam Iman di Tengah Ketidakpastian
+TITLE: Berjalan dalam Iman di Tengah Ketidakpastian
 
 ...
 
 Saving to MySQL...
-Saved with ID: 1 (Walking in Faith During Uncertain Times)
+Saved with ID: 1 (Berjalan dalam Iman di Tengah Ketidakpastian)
 ```
 
 ### Running the Frontend
@@ -288,7 +287,7 @@ catatan-firman/
 
 ## Summary Output Structure
 
-The AI generates bilingual structured summaries (English + Indonesian) with the following sections:
+The AI generates structured summaries with the following sections:
 
 | Section | Description |
 |---------|-------------|
@@ -296,11 +295,9 @@ The AI generates bilingual structured summaries (English + Indonesian) with the 
 | **Summary** | 2-3 paragraph executive summary capturing main theme and key takeaways |
 | **Key Points** | 5-7 main takeaways including core teachings and illustrations |
 | **Bible Verses** | Scripture references with brief context (empty if none mentioned) |
-| **Quotes** | 2-4 notable quotes from the speaker (verbatim, in original language) |
+| **Quotes** | 2-4 notable quotes from the speaker |
 | **Action Items** | 3-5 specific, actionable steps listeners can apply |
 | **Reflection Questions** | 2-3 thought-provoking questions for reflection or discussion |
-
-Each section is generated in both English and Indonesian, stored in separate database columns (e.g., `title_en`, `title_id`).
 
 ## Security Features
 
@@ -343,4 +340,4 @@ MIT
 
 ---
 
-**Demo:** [https://catatan-firman.netlify.app/](https://catatan-firman.netlify.app/)
+**Repository:** [https://github.com/ad17-2/catatan-firman](https://github.com/ad17-2/catatan-firman)
