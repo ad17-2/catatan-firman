@@ -48,7 +48,7 @@ async function main(): Promise<void> {
       consoleLogger.info("\nSaving to MySQL...");
       mysqlService = new MysqlService(config.mysql);
       const saved = await mysqlService.save(result.summary, result.youtubeUrl);
-      consoleLogger.info(`Saved with ID: ${saved.id} (${saved.title_en})`);
+      consoleLogger.info(`Saved with ID: ${saved.id} (${saved.title})`);
     }
   } catch (error) {
     printError(

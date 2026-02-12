@@ -1,13 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { AppConfig } from "../config/index.js";
-import type { BilingualSummary } from "../types/index.js";
+import type { SermonSummary } from "../types/index.js";
 import { SummarizationError, wrapError } from "../errors/index.js";
-import { BilingualSummarySchema } from "./schemas/summary.js";
+import { SummarySchema } from "./schemas/summary.js";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts/summarization.js";
 
 export interface ISummarizationService {
-  summarize(transcript: string): Promise<BilingualSummary>;
+  summarize(transcript: string): Promise<SermonSummary>;
 }
 
 export class SummarizationService implements ISummarizationService {
@@ -20,9 +20,9 @@ export class SummarizationService implements ISummarizationService {
     this.model = config.model;
   }
 
-  async summarize(transcript: string): Promise<BilingualSummary> {
+  async summarize(transcript: string): Promise<SermonSummary> {
     try {
-      const schema = z.toJSONSchema(BilingualSummarySchema);
+      const schema = z.toJSONSchema(SummarySchema);
 
       const response = await this.client.messages.create(
         {
@@ -46,7 +46,7 @@ export class SummarizationService implements ISummarizationService {
         (block) => block.type === "text",
       );
       const text = textBlock && "text" in textBlock ? textBlock.text : "";
-      const parsed = BilingualSummarySchema.parse(JSON.parse(text));
+      const parsed = SummarySchema.parse(JSON.parse(text));
 
       return {
         ...parsed,

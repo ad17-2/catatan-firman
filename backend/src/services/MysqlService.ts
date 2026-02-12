@@ -1,9 +1,9 @@
 import mysql, { type Pool, type PoolOptions } from "mysql2/promise";
-import type { BilingualSummary } from "../types/index.js";
+import type { SermonSummary } from "../types/index.js";
 
 export interface SavedSermon {
   id: number;
-  title_en: string;
+  title: string;
   created_at: string;
 }
 
@@ -32,31 +32,22 @@ export class MysqlService {
   }
 
   async save(
-    summary: BilingualSummary,
+    summary: SermonSummary,
     youtubeUrl?: string,
   ): Promise<SavedSermon> {
     const [result] = await this.pool.execute(
       `INSERT INTO sermons (
-        title_en, title_id, summary_en, summary_id,
-        key_points_en, key_points_id, bible_verses_en, bible_verses_id,
-        quotes_en, quotes_id, action_items_en, action_items_id,
-        reflection_questions_en, reflection_questions_id, youtube_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        title, summary, key_points, bible_verses,
+        quotes, action_items, reflection_questions, youtube_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        summary.en.title,
-        summary.id.title,
-        summary.en.summary,
-        summary.id.summary,
-        JSON.stringify(summary.en.keyPoints),
-        JSON.stringify(summary.id.keyPoints),
-        JSON.stringify(summary.en.bibleVerses),
-        JSON.stringify(summary.id.bibleVerses),
-        JSON.stringify(summary.en.quotes),
-        JSON.stringify(summary.id.quotes),
-        JSON.stringify(summary.en.actionItems),
-        JSON.stringify(summary.id.actionItems),
-        JSON.stringify(summary.en.reflectionQuestions),
-        JSON.stringify(summary.id.reflectionQuestions),
+        summary.title,
+        summary.summary,
+        JSON.stringify(summary.keyPoints),
+        JSON.stringify(summary.bibleVerses),
+        JSON.stringify(summary.quotes),
+        JSON.stringify(summary.actionItems),
+        JSON.stringify(summary.reflectionQuestions),
         youtubeUrl || null,
       ],
     );
@@ -64,7 +55,7 @@ export class MysqlService {
     const insertId = (result as mysql.ResultSetHeader).insertId;
 
     const [rows] = await this.pool.execute(
-      "SELECT id, title_en, created_at FROM sermons WHERE id = ?",
+      "SELECT id, title, created_at FROM sermons WHERE id = ?",
       [insertId],
     );
 

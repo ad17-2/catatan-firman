@@ -17,17 +17,8 @@ const pool = mysql.createPool({
 });
 
 const SELECT_SERMON = `
-  SELECT
-    id,
-    title_id AS title,
-    summary_id AS summary,
-    key_points_id AS key_points,
-    bible_verses_id AS bible_verses,
-    quotes_id AS quotes,
-    action_items_id AS action_items,
-    reflection_questions_id AS reflection_questions,
-    youtube_url,
-    created_at
+  SELECT id, title, summary, key_points, bible_verses, quotes,
+    action_items, reflection_questions, youtube_url, created_at
   FROM sermons
 `;
 
@@ -47,7 +38,7 @@ export async function getSermons(searchQuery?: string): Promise<Sermon[]> {
       .join(" ");
 
     const [rows] = await pool.query(
-      `${SELECT_SERMON} WHERE MATCH(title_id, summary_id) AGAINST (? IN BOOLEAN MODE) ORDER BY created_at DESC`,
+      `${SELECT_SERMON} WHERE MATCH(title, summary) AGAINST (? IN BOOLEAN MODE) ORDER BY created_at DESC`,
       [terms],
     );
     return rows as Sermon[];

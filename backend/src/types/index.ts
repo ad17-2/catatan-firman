@@ -1,6 +1,6 @@
-import type { BilingualSummaryOutput } from "../services/schemas/summary.js";
+import type { SummaryOutput } from "../services/schemas/summary.js";
 
-export type BilingualSummary = BilingualSummaryOutput & { rawResponse: string };
+export type SermonSummary = SummaryOutput & { rawResponse: string };
 
 export interface TranscriptionResult {
   text: string;
@@ -15,7 +15,7 @@ export interface PipelineInput {
 
 export interface PipelineResult {
   transcript: TranscriptionResult;
-  summary: BilingualSummary;
+  summary: SermonSummary;
   youtubeUrl: string;
 }
 

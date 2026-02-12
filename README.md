@@ -89,23 +89,16 @@ USE `catatan-firman`;
 
 CREATE TABLE `sermons` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `title_en` TEXT NOT NULL,
-  `title_id` TEXT NOT NULL,
-  `summary_en` TEXT NOT NULL,
-  `summary_id` TEXT NOT NULL,
-  `key_points_en` JSON NOT NULL,
-  `key_points_id` JSON NOT NULL,
-  `bible_verses_en` JSON NOT NULL,
-  `bible_verses_id` JSON NOT NULL,
-  `quotes_en` JSON NOT NULL,
-  `quotes_id` JSON NOT NULL,
-  `action_items_en` JSON NOT NULL,
-  `action_items_id` JSON NOT NULL,
-  `reflection_questions_en` JSON NOT NULL,
-  `reflection_questions_id` JSON NOT NULL,
+  `title` VARCHAR(500) NOT NULL,
+  `summary` TEXT NOT NULL,
+  `key_points` JSON NOT NULL,
+  `bible_verses` JSON NOT NULL,
+  `quotes` JSON NOT NULL,
+  `action_items` JSON NOT NULL,
+  `reflection_questions` JSON NOT NULL,
   `youtube_url` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FULLTEXT INDEX `ft_title_summary_id` (`title_id`, `summary_id`)
+  FULLTEXT INDEX `ft_title_summary` (`title`, `summary`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -298,24 +291,6 @@ The AI generates structured summaries with the following sections:
 | **Quotes** | 2-4 notable quotes from the speaker |
 | **Action Items** | 3-5 specific, actionable steps listeners can apply |
 | **Reflection Questions** | 2-3 thought-provoking questions for reflection or discussion |
-
-## Security Features
-
-### Backend
-
-- **Shell Injection Prevention** — Uses `execFile` instead of `exec` for yt-dlp execution
-- **Input Validation** — YouTube URL validation before processing
-- **Parameterized Queries** — All database queries use prepared statements
-- **Error Boundaries** — Custom error types with error wrapping
-
-### Frontend
-
-- **Server-Only Database Access** — MySQL client marked with `server-only` package
-- **Content Security Policy** — Strict CSP with minimal inline script allowances
-- **Security Headers** — X-Frame-Options, X-Content-Type-Options, Referrer-Policy
-- **Input Sanitization** — Search query sanitization removes MySQL special characters
-- **ID Validation** — Integer validation and bounds checking for sermon IDs
-- **Connection Pooling** — Limited connection pool size prevents resource exhaustion
 
 ## Development
 

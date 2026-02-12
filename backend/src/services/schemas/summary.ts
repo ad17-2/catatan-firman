@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const LanguageSummarySchema = z.object({
+export const SummarySchema = z.object({
   title: z.string().describe("Short, descriptive title for the sermon"),
   summary: z.string().describe("2-3 paragraph executive summary"),
   keyPoints: z.array(z.string()).describe("5-7 key points as bullet items"),
@@ -14,10 +14,4 @@ const LanguageSummarySchema = z.object({
   reflectionQuestions: z.array(z.string()).describe("2-3 reflection questions"),
 });
 
-export const BilingualSummarySchema = z.object({
-  en: LanguageSummarySchema,
-  id: LanguageSummarySchema,
-});
-
-export type LanguageSummary = z.infer<typeof LanguageSummarySchema>;
-export type BilingualSummaryOutput = z.infer<typeof BilingualSummarySchema>;
+export type SummaryOutput = z.infer<typeof SummarySchema>;
