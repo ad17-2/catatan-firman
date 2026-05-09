@@ -3,6 +3,7 @@ import fs from "fs";
 import type { AppConfig } from "../config/index.js";
 import type { TranscriptionResult } from "../types/index.js";
 import { TranscriptionError, wrapError } from "../errors/index.js";
+import { TRANSCRIPTION_PROMPT } from "./prompts/transcription.js";
 
 export class TranscriptionService {
   private readonly client: OpenAI;
@@ -21,6 +22,7 @@ export class TranscriptionService {
         file: fs.createReadStream(audioPath),
         model: this.model,
         language: this.language,
+        prompt: TRANSCRIPTION_PROMPT,
         response_format: "verbose_json",
       });
 

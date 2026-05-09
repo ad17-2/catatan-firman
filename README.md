@@ -1,104 +1,174 @@
 # Catatan Firman
 
-An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a web application for browsing and searching summaries.
+An end-to-end pipeline for transcribing and summarizing Indonesian sermon videos from YouTube, with a web application for browsing, searching, and reading sermon notes.
 
 ## Overview
 
-This project automates the process of converting YouTube sermon videos into structured, searchable summaries. It consists of two main components:
+This project converts YouTube sermon videos into structured, searchable Indonesian notes. It consists of:
 
-1. **CLI Backend** — Downloads YouTube audio, transcribes using OpenAI Whisper, and generates structured summaries using Anthropic Claude
-2. **Next.js Frontend** — Server-rendered web app for viewing and searching sermon summaries with direct MySQL access
+1. **Backend CLI** — downloads YouTube audio, transcribes it with OpenAI Whisper, summarizes it with OpenAI, and can persist the result to MySQL.
+2. **Next.js Frontend** — server-rendered web app for browsing, searching, and reading sermon summaries and timestamped transcripts.
+3. **MySQL Database** — stores summaries, structured JSON fields, YouTube URLs, transcript text, and timestamped transcript segments.
+4. **Docker Compose Stack** — runs MySQL and the production Next.js app, with an optional backend CLI service for processing videos.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    A[YouTube URL] --> B[CLI Backend]
+    A[YouTube URL] --> B[Backend CLI]
     B --> C[(MySQL)]
     C --> D[Next.js App]
 
-    subgraph B[CLI Backend Pipeline]
-        B1[yt-dlp] --> B2[Whisper API]
-        B2 --> B3[Claude API]
+    subgraph B[Backend CLI Pipeline]
+        B1[yt-dlp] --> B2[OpenAI Whisper]
+        B2 --> B3[OpenAI Responses API]
         B3 --> B4[MySQL]
     end
 
     subgraph D[Next.js Frontend]
         D1[Server Components] --> D2[MySQL Pool]
-        D2 --> D3[Full-text Search]
+        D2 --> D3[Search + Detail Pages]
+        D3 --> D4[Summary Tab]
+        D3 --> D5[Transcript Tab]
     end
 ```
 
-The backend processes videos offline via CLI, while the frontend reads directly from MySQL using Next.js server components for optimal performance and security.
+The backend runs as an offline CLI pipeline. The frontend reads directly from MySQL using Next.js server components and shows each sermon as a summary view plus a transcript view when timestamped segments are available.
 
 ## Features
 
-### CLI Backend
+### Backend CLI
 
-- **YouTube Integration** — Downloads audio directly from YouTube URLs using yt-dlp (security: uses `execFile` to prevent shell injection)
-- **Transcription** — Accurate Indonesian transcription via OpenAI Whisper API
-- **AI Summaries** — Generates structured Indonesian summaries using Claude's structured outputs
-- **Auto-Generated Titles** — Claude generates appropriate titles from sermon content
-- **Structured Data** — Extracts key points, Bible verses, quotes, action items, and reflection questions
-- **Database Storage** — Persistence to MySQL with YouTube link
+- **YouTube integration** — downloads audio from YouTube URLs using `yt-dlp`.
+- **OpenAI transcription** — transcribes Indonesian sermon audio with Whisper and a sermon-specific transcription prompt.
+- **Timestamped transcript persistence** — stores full transcript text and Whisper segment timestamps in MySQL.
+- **OpenAI summarization** — generates structured Indonesian summaries with OpenAI JSON schema output.
+- **Structured data** — extracts title, summary, key points, Bible verses, quotes, action items, and reflection questions.
+- **Database storage** — saves sermon data and the source YouTube URL when `--save` is used.
 
 ### Next.js Frontend
 
-- **Server-Side Rendering** — Fast initial page loads with React Server Components
-- **Direct MySQL Access** — No API layer, uses connection pooling for efficiency
-- **Full-Text Search** — MySQL FULLTEXT indexes for fast Indonesian search
-- **Input Validation** — Sanitizes search terms and validates ID parameters
-- **Security Headers** — Comprehensive CSP, X-Frame-Options, and other security headers
-- **Responsive Design** — Works seamlessly on desktop and mobile
-- **Beautiful Typography** — Editorial-inspired design with Fraunces and Newsreader fonts
+- **Server-side rendering** — fast initial page loads with React Server Components.
+- **Direct MySQL access** — uses a server-only MySQL connection pool without a separate API layer.
+- **Full-text search** — MySQL FULLTEXT index over sermon titles and summaries.
+- **Transcript tab** — sermon detail pages include separate `Ringkasan` and `Transkrip` tabs.
+- **Timestamped transcript display** — transcript segments show start times for easier navigation back to the source recording.
+- **Input validation** — sanitizes search terms and validates ID parameters.
+- **Security headers** — configured in the Next.js app.
+- **Responsive design** — works on desktop and mobile.
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| **Frontend Framework** | Next.js 16 (App Router) |
+| **Frontend Framework** | Next.js 16 App Router |
 | **Frontend UI** | React 19, Tailwind CSS 4 |
-| **Backend Runtime** | Node.js, TypeScript |
-| **Database** | MySQL 8.0+ |
+| **Backend Runtime** | Node.js 20+, TypeScript |
+| **Database** | MySQL 8.0+ / Docker image `mysql:8.4` |
 | **YouTube Download** | yt-dlp |
 | **Transcription** | OpenAI Whisper API |
-| **Summarization** | Anthropic Claude (claude-sonnet-4-5) |
+| **Summarization** | OpenAI Responses API |
 | **Schema Validation** | Zod |
 | **CLI Framework** | Commander.js |
+| **Containers** | Docker, Docker Compose |
 
 ## Prerequisites
 
+For local development without Docker:
+
 - Node.js 20+
 - MySQL 8.0+
-- yt-dlp installed (`pip install yt-dlp` or `brew install yt-dlp`)
+- `yt-dlp` installed (`brew install yt-dlp` or `pip install yt-dlp`)
 - OpenAI API key
-- Anthropic API key
 
-## Database Setup
+For Docker usage:
 
-Create the `catatan-firman` database and `sermons` table in MySQL:
+- Docker and Docker Compose
+- OpenAI API key when running the backend CLI service
 
-```sql
-CREATE DATABASE IF NOT EXISTS `catatan-firman` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+## Environment Variables
 
-USE `catatan-firman`;
+### Backend CLI
 
-CREATE TABLE `sermons` (
-  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `title` VARCHAR(500) NOT NULL,
-  `summary` TEXT NOT NULL,
-  `key_points` JSON NOT NULL,
-  `bible_verses` JSON NOT NULL,
-  `quotes` JSON NOT NULL,
-  `action_items` JSON NOT NULL,
-  `reflection_questions` JSON NOT NULL,
-  `youtube_url` TEXT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FULLTEXT INDEX `ft_title_summary` (`title`, `summary`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+Create `backend/.env` for local CLI usage.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | Yes | OpenAI API key for transcription and summarization. |
+| `OPENAI_SUMMARY_MODEL` | No | OpenAI model for summarization. Defaults to `gpt-4.1-mini`. |
+| `MYSQL_HOST` | For `--save` | MySQL server hostname. |
+| `MYSQL_DATABASE` | For `--save` | Database name. |
+| `MYSQL_USER` | No | MySQL username. Defaults to `root` locally. |
+| `MYSQL_PASSWORD` | No | MySQL password. Defaults to empty locally. |
+| `MYSQL_PORT` | No | MySQL port. Defaults to `3306`. |
+
+Example:
+
+```env
+OPENAI_API_KEY=sk-...
+OPENAI_SUMMARY_MODEL=gpt-4.1-mini
+
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your-password
+MYSQL_DATABASE=catatan-firman
+MYSQL_PORT=3306
 ```
 
-The FULLTEXT index enables fast search across Indonesian titles and summaries.
+### Frontend App
+
+Create `app/.env.local` for local frontend usage.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MYSQL_HOST` | Yes | MySQL server hostname. |
+| `MYSQL_USER` | Yes | MySQL username. |
+| `MYSQL_PASSWORD` | Yes | MySQL password. |
+| `MYSQL_DATABASE` | Yes | Database name. |
+
+Example:
+
+```env
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your-password
+MYSQL_DATABASE=catatan-firman
+```
+
+### Docker Compose
+
+Docker Compose can be configured from a root `.env` file or shell environment.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MYSQL_DATABASE` | `catatan-firman` | Database created by the MySQL container. |
+| `MYSQL_USER` | `catatan` | App/CLI database user. |
+| `MYSQL_PASSWORD` | `catatan` | App/CLI database password. |
+| `MYSQL_ROOT_PASSWORD` | `catatan-root` | MySQL root password. |
+| `MYSQL_HOST_PORT` | `3307` | Host port mapped to container port `3306`. |
+| `APP_HOST_PORT` | `3001` | Host port mapped to the Next.js container port `3000`. |
+| `OPENAI_API_KEY` | empty | Required only when running the backend CLI container. |
+| `OPENAI_SUMMARY_MODEL` | `gpt-4.1-mini` | Optional summarization model for the backend CLI container. |
+
+## Database Schema and Migrations
+
+The canonical SQL files are:
+
+- `docker/mysql/init/001_create_sermons.sql` — creates the `sermons` table for a fresh Docker MySQL volume.
+- `backend/migrations/001_add_transcript_fields.sql` — adds `transcript` and `transcript_segments` to an existing database.
+
+The current `sermons` table stores:
+
+- summary fields: `title`, `summary`, `key_points`, `bible_verses`, `quotes`, `action_items`, `reflection_questions`
+- source metadata: `youtube_url`, `created_at`
+- transcript fields: `transcript`, `transcript_segments`
+- search index: FULLTEXT index on `title` and `summary`
+
+For an existing local database, run the migration manually after backing up data:
+
+```bash
+mysql -u root -p catatan-firman < backend/migrations/001_add_transcript_fields.sql
+```
 
 ## Setup
 
@@ -110,31 +180,7 @@ npm install
 cp .env.example .env
 ```
 
-Configure `backend/.env`:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for Whisper transcription |
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude summarization |
-| `MYSQL_HOST` | For `--save` | MySQL server hostname (default: localhost) |
-| `MYSQL_USER` | For `--save` | MySQL username (default: root) |
-| `MYSQL_PASSWORD` | For `--save` | MySQL password |
-| `MYSQL_DATABASE` | For `--save` | Database name (catatan-firman) |
-| `MYSQL_PORT` | For `--save` | MySQL port (default: 3306) |
-
-Example:
-
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Required only when using --save flag
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=catatan-firman
-MYSQL_PORT=3306
-```
+Then configure `backend/.env` with the variables above.
 
 ### Frontend Setup
 
@@ -144,74 +190,34 @@ npm install
 cp .env.local.example .env.local
 ```
 
-Configure `app/.env.local`:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `MYSQL_HOST` | Yes | MySQL server hostname |
-| `MYSQL_USER` | Yes | MySQL username |
-| `MYSQL_PASSWORD` | Yes | MySQL password |
-| `MYSQL_DATABASE` | Yes | Database name (catatan-firman) |
-
-Example:
-
-```env
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=catatan-firman
-```
+Then configure `app/.env.local` with the MySQL variables above.
 
 ## Usage
 
-### Processing a Sermon (CLI)
+### Processing a Sermon Locally
 
 ```bash
 cd backend
 npm start -- -i "https://youtube.com/watch?v=xxx" --save
 ```
 
-**Command-line Options:**
+Command-line options:
 
 | Flag | Description |
 |------|-------------|
-| `-i, --input <url>` | YouTube URL (required) |
-| `--save` | Save summary to MySQL database |
+| `-i, --input <url>` | YouTube URL. Required. |
+| `--save` | Save the summary, transcript, and transcript segments to MySQL. |
 
-**Example Output:**
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  Catatan Firman — Sermon Transcription & Summarization      ║
-╚══════════════════════════════════════════════════════════════╝
-
-Input: https://youtube.com/watch?v=xxx
-
-Step 1: Downloading from YouTube...
-Duration: 45 minutes
-Step 2: Transcribing...
-Transcription: 12543 chars
-Step 3: Summarizing...
-Done!
-
-TITLE: Berjalan dalam Iman di Tengah Ketidakpastian
-
-...
-
-Saving to MySQL...
-Saved with ID: 1 (Berjalan dalam Iman di Tengah Ketidakpastian)
-```
-
-### Running the Frontend
+### Running the Frontend Locally
 
 ```bash
 cd app
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000).
 
-**Production Build:**
+Production build:
 
 ```bash
 cd app
@@ -219,58 +225,55 @@ npm run build
 npm start
 ```
 
+## Docker Compose Usage
+
+Start MySQL and the production Next.js app:
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+| Service | Description |
+|---------|-------------|
+| `mysql` | MySQL 8.4 with schema initialization from `docker/mysql/init`. Exposed on `localhost:3307` by default. |
+| `app` | Production Next.js app. Exposed on [http://localhost:3001](http://localhost:3001) by default. |
+| `backend` | Optional CLI service under the `cli` profile. |
+
+Run the backend CLI through Docker Compose:
+
+```bash
+OPENAI_API_KEY=sk-... docker compose --profile cli run --rm backend -i "https://youtube.com/watch?v=xxx" --save
+```
+
+The backend container connects to MySQL through the Compose network and stores processed sermons in the `mysql` service database.
+
 ## Project Structure
 
-```
+```text
 catatan-firman/
-├── backend/                          # CLI application
-│   ├── src/
-│   │   ├── cli/                      # CLI parsing and output
-│   │   │   ├── args.ts               # Commander.js argument parsing
-│   │   │   ├── output.ts             # Console formatting
-│   │   │   └── index.ts
-│   │   ├── config/
-│   │   │   └── index.ts              # Environment variable validation
-│   │   ├── errors/
-│   │   │   └── index.ts              # Custom error types
-│   │   ├── pipeline/
-│   │   │   ├── Pipeline.ts           # Main orchestration
-│   │   │   └── index.ts
-│   │   ├── services/
-│   │   │   ├── prompts/
-│   │   │   │   └── summarization.ts  # Claude prompt templates
-│   │   │   ├── schemas/
-│   │   │   │   └── summary.ts        # Zod validation schemas
-│   │   │   ├── AudioService.ts       # Audio file cleanup
-│   │   │   ├── MysqlService.ts       # Database persistence
-│   │   │   ├── SummarizationService.ts  # Claude API client
-│   │   │   ├── TranscriptionService.ts  # Whisper API client
-│   │   │   ├── YouTubeService.ts     # yt-dlp wrapper
-│   │   │   └── index.ts
-│   │   ├── types/
-│   │   │   └── index.ts              # TypeScript type definitions
-│   │   └── index.ts                  # Entry point
-│   ├── package.json
-│   └── .env.example
-│
 ├── app/                              # Next.js web application
 │   ├── src/
-│   │   ├── app/
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx          # Sermon detail page
-│   │   │   ├── layout.tsx            # Root layout with fonts
-│   │   │   ├── page.tsx              # Homepage with search
-│   │   │   └── globals.css
-│   │   ├── components/
-│   │   │   ├── HomeContent.tsx       # Client-side search form
-│   │   │   └── SermonDetail.tsx      # Sermon display
-│   │   └── lib/
-│   │       ├── db.ts                 # MySQL client (server-only)
-│   │       └── types.ts              # Shared types
-│   ├── next.config.ts                # Security headers
-│   ├── package.json
-│   └── .env.local
-│
+│   │   ├── app/                      # App Router pages and layout
+│   │   ├── components/               # UI components, including sermon detail tabs
+│   │   └── lib/                      # MySQL access and shared frontend types
+│   ├── Dockerfile                    # Production Next.js image
+│   ├── next.config.ts                # Next.js config and security headers
+│   └── package.json
+├── backend/                          # CLI application
+│   ├── migrations/                   # SQL migrations for existing databases
+│   ├── src/
+│   │   ├── cli/                      # CLI parsing and console output
+│   │   ├── config/                   # Environment variable loading and validation
+│   │   ├── pipeline/                 # Pipeline orchestration
+│   │   ├── services/                 # YouTube, transcription, summarization, MySQL
+│   │   └── types/                    # Backend TypeScript types
+│   ├── Dockerfile                    # Backend CLI image with yt-dlp dependencies
+│   └── package.json
+├── docker/
+│   └── mysql/init/                   # Fresh database initialization SQL
+├── docker-compose.yml
 └── README.md
 ```
 
@@ -280,29 +283,39 @@ The AI generates structured summaries with the following sections:
 
 | Section | Description |
 |---------|-------------|
-| **Title** | Auto-generated title from sermon content (3-8 words) |
-| **Summary** | 2-3 paragraph executive summary capturing main theme and key takeaways |
-| **Key Points** | 5-7 main takeaways including core teachings and illustrations |
-| **Bible Verses** | Scripture references with brief context (empty if none mentioned) |
-| **Quotes** | 2-4 notable quotes from the speaker |
-| **Action Items** | 3-5 specific, actionable steps listeners can apply |
-| **Reflection Questions** | 2-3 thought-provoking questions for reflection or discussion |
+| **Title** | Auto-generated Indonesian title from sermon content. |
+| **Summary** | 2-3 paragraph summary capturing the main theme and key takeaways. |
+| **Key Points** | 5-7 main teachings or arguments from the sermon. |
+| **Bible Verses** | Scripture references explicitly mentioned or clearly used in the transcript. |
+| **Quotes** | 2-4 notable speaker statements copied as faithfully as the transcript allows. |
+| **Action Items** | 3-5 specific, grounded application steps. |
+| **Reflection Questions** | 2-3 questions for personal reflection or group discussion. |
 
-## Development
+## Development and Validation
 
 ### Backend
 
 ```bash
 cd backend
-npm run dev  # Watch mode with tsx
+npm run dev        # Watch mode with tsx
+npm run typecheck  # TypeScript typecheck
+npm run build      # Build validation; currently runs TypeScript with no emit
 ```
 
 ### Frontend
 
 ```bash
 cd app
-npm run dev    # Development server with hot reload
+npm run dev    # Development server
 npm run lint   # ESLint
+npm run build  # Production build validation
+```
+
+Before committing changes, run the relevant validators:
+
+```bash
+cd app && npm run lint && npm run build
+cd backend && npm run typecheck && npm run build
 ```
 
 ## License

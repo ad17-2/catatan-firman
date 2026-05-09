@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import type { Sermon } from "@/lib/types";
+import { useState } from "react";
+import type { Sermon, TranscriptSegment } from "@/lib/types";
 
 interface SermonDetailProps {
   sermon: Sermon;
 }
+
+type DetailTab = "summary" | "transcript";
+
+const DETAIL_TABS: { key: DetailTab; label: string }[] = [
+  { key: "summary", label: "Ringkasan" },
+  { key: "transcript", label: "Transkrip" },
+];
 
 const SECTIONS = [
   { key: "summary", label: "Ringkasan", icon: "M4 6h16M4 12h16M4 18h7" },
@@ -17,6 +25,8 @@ const SECTIONS = [
 ] as const;
 
 export function SermonDetail({ sermon }: SermonDetailProps) {
+  const [activeTab, setActiveTab] = useState<DetailTab>("summary");
+  const transcriptSegments = sermon.transcript_segments ?? [];
   const formattedDate = new Date(sermon.created_at).toLocaleDateString(
     "id-ID",
     { weekday: "long", year: "numeric", month: "long", day: "numeric" },
@@ -130,38 +140,78 @@ export function SermonDetail({ sermon }: SermonDetailProps) {
         </div>
       </header>
 
-      <div
-        className="border-b sticky top-[49px] z-40 backdrop-blur-md overflow-x-auto opacity-0 animate-fade-in stagger-2"
-        style={{
-          backgroundColor: "rgba(247, 243, 237, 0.92)",
-          borderColor: "var(--color-border)",
-        }}
-      >
-        <div className="max-w-3xl mx-auto px-6">
-          <nav className="flex gap-1 py-2 -mx-2">
-            {SECTIONS.map(({ key, label }) => {
-              const hasContent =
-                key === "summary"
-                  ? !!sermon.summary
-                  : (sermon[key] as string[])?.length > 0;
-              if (!hasContent) return null;
+      <div className="border-y opacity-0 animate-fade-in stagger-2" style={{ borderColor: "var(--color-border)" }}>
+        <div className="max-w-3xl mx-auto px-6 py-3">
+          <div
+            className="inline-flex p-1 rounded-full"
+            role="tablist"
+            aria-label="Pilihan tampilan catatan"
+            style={{ backgroundColor: "var(--color-warm-white)" }}
+          >
+            {DETAIL_TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
 
               return (
-                <a
-                  key={key}
-                  href={`#${key}`}
-                  className="px-3 py-1.5 rounded-md text-xs font-display font-500 whitespace-nowrap transition-all duration-200 hover:bg-[var(--color-terracotta-muted)] hover:text-[var(--color-terracotta)]"
-                  style={{ color: "var(--color-ink-secondary)" }}
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.key)}
+                  className="px-5 py-2 rounded-full text-sm font-display font-500 transition-all duration-200"
+                  style={{
+                    backgroundColor: isActive
+                      ? "var(--color-terracotta)"
+                      : "transparent",
+                    color: isActive
+                      ? "var(--color-warm-white)"
+                      : "var(--color-ink-secondary)",
+                  }}
                 >
-                  {label}
-                </a>
+                  {tab.label}
+                </button>
               );
             })}
-          </nav>
+          </div>
         </div>
       </div>
 
+      {activeTab === "summary" && (
+        <div
+          className="border-b sticky top-[49px] z-40 backdrop-blur-md overflow-x-auto opacity-0 animate-fade-in stagger-2"
+          style={{
+            backgroundColor: "rgba(247, 243, 237, 0.92)",
+            borderColor: "var(--color-border)",
+          }}
+        >
+          <div className="max-w-3xl mx-auto px-6">
+            <nav className="flex gap-1 py-2 -mx-2">
+              {SECTIONS.map(({ key, label }) => {
+                const hasContent =
+                  key === "summary"
+                    ? !!sermon.summary
+                    : (sermon[key] as string[])?.length > 0;
+                if (!hasContent) return null;
+
+                return (
+                  <a
+                    key={key}
+                    href={`#${key}`}
+                    className="px-3 py-1.5 rounded-md text-xs font-display font-500 whitespace-nowrap transition-all duration-200 hover:bg-[var(--color-terracotta-muted)] hover:text-[var(--color-terracotta)]"
+                    style={{ color: "var(--color-ink-secondary)" }}
+                  >
+                    {label}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
+
       <article className="max-w-3xl mx-auto px-6 pt-10 pb-24">
+        {activeTab === "summary" ? (
+          <>
         <section id="summary" className="mb-14 scroll-mt-28 opacity-0 animate-fade-in-up stagger-3">
           <SectionHeader label="Ringkasan" index={0} />
           <div
@@ -324,6 +374,10 @@ export function SermonDetail({ sermon }: SermonDetailProps) {
             </div>
           </section>
         )}
+          </>
+        ) : (
+          <TranscriptView segments={transcriptSegments} />
+        )}
       </article>
 
       <footer className="border-t py-10" style={{ borderColor: "var(--color-border)" }}>
@@ -379,5 +433,121 @@ function SectionHeader({ label, index }: { label: string; index: number }) {
         style={{ backgroundColor: "var(--color-border)" }}
       />
     </div>
+  );
+}
+
+function formatTimestamp(seconds: number): string {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+      remainingSeconds,
+    ).padStart(2, "0")}`;
+  }
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
+  if (segments.length === 0) {
+    return (
+      <section className="opacity-0 animate-fade-in-up stagger-3">
+        <div
+          className="rounded-2xl border p-8 md:p-10 text-center"
+          style={{
+            backgroundColor: "var(--color-warm-white)",
+            borderColor: "var(--color-border-light)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          <div
+            className="w-12 h-12 rounded-full mx-auto mb-5 flex items-center justify-center"
+            style={{ backgroundColor: "var(--color-terracotta-muted)" }}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="var(--color-terracotta)"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+              />
+            </svg>
+          </div>
+          <h2
+            className="font-display text-2xl font-600 mb-3"
+            style={{ color: "var(--color-ink)" }}
+          >
+            Transkrip belum tersedia
+          </h2>
+          <p
+            className="font-body text-[16px] leading-relaxed max-w-xl mx-auto"
+            style={{ color: "var(--color-ink-secondary)" }}
+          >
+            Catatan lama mungkin belum memiliki transkrip bertimestamp. Transkrip
+            akan muncul untuk khotbah baru yang diproses setelah fitur ini aktif.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="opacity-0 animate-fade-in-up stagger-3">
+      <div className="mb-8">
+        <span
+          className="block text-[11px] font-display font-600 tracking-widest uppercase mb-3"
+          style={{ color: "var(--color-terracotta)" }}
+        >
+          Transkrip Bertimestamp
+        </span>
+        <h2
+          className="font-display text-2xl md:text-3xl font-600 mb-3"
+          style={{ color: "var(--color-ink)" }}
+        >
+          Dengarkan kembali alur khotbah
+        </h2>
+        <p
+          className="font-body text-[16px] leading-relaxed"
+          style={{ color: "var(--color-ink-secondary)" }}
+        >
+          Setiap bagian transkrip ditandai dengan waktu mulai agar mudah
+          dilacak ke rekaman aslinya.
+        </p>
+      </div>
+
+      <ol className="space-y-3">
+        {segments.map((segment, index) => (
+          <li
+            key={`${segment.start}-${index}`}
+            className="group grid gap-3 rounded-xl border p-4 md:grid-cols-[88px_1fr] md:gap-5 transition-colors duration-200 hover:border-[var(--color-terracotta-light)]"
+            style={{
+              backgroundColor: "var(--color-warm-white)",
+              borderColor: "var(--color-border-light)",
+            }}
+          >
+            <time
+              className="font-display text-sm font-600 tabular-nums"
+              style={{ color: "var(--color-terracotta)" }}
+            >
+              {formatTimestamp(segment.start)}
+            </time>
+            <p
+              className="font-body text-[16px] leading-relaxed"
+              style={{ color: "var(--color-ink-secondary)" }}
+            >
+              {segment.text.trim()}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -1,5 +1,5 @@
 import mysql, { type Pool, type PoolOptions } from "mysql2/promise";
-import type { SermonSummary } from "../types/index.js";
+import type { SermonSummary, TranscriptionResult } from "../types/index.js";
 
 export interface SavedSermon {
   id: number;
@@ -34,12 +34,14 @@ export class MysqlService {
   async save(
     summary: SermonSummary,
     youtubeUrl?: string,
+    transcript?: TranscriptionResult,
   ): Promise<SavedSermon> {
     const [result] = await this.pool.execute(
       `INSERT INTO sermons (
         title, summary, key_points, bible_verses,
-        quotes, action_items, reflection_questions, youtube_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        quotes, action_items, reflection_questions, youtube_url,
+        transcript, transcript_segments
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         summary.title,
         summary.summary,
@@ -49,6 +51,8 @@ export class MysqlService {
         JSON.stringify(summary.actionItems),
         JSON.stringify(summary.reflectionQuestions),
         youtubeUrl || null,
+        transcript?.text || null,
+        transcript ? JSON.stringify(transcript.segments) : null,
       ],
     );
 

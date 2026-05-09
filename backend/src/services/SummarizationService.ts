@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
 import type { AppConfig } from "../config/index.js";
 import type { SermonSummary } from "../types/index.js";
@@ -11,46 +11,39 @@ export interface ISummarizationService {
 }
 
 export class SummarizationService implements ISummarizationService {
-  private readonly client: Anthropic;
+  private readonly client: OpenAI;
   private readonly model: string;
-  private readonly maxTokens: number = 8192;
+  private readonly maxOutputTokens: number = 8192;
 
-  constructor(config: AppConfig["anthropic"]) {
-    this.client = new Anthropic({ apiKey: config.apiKey });
-    this.model = config.model;
+  constructor(config: AppConfig["openai"]) {
+    this.client = new OpenAI({ apiKey: config.apiKey });
+    this.model = config.summaryModel;
   }
 
   async summarize(transcript: string): Promise<SermonSummary> {
     try {
       const schema = z.toJSONSchema(SummarySchema);
 
-      const response = await this.client.messages.create(
-        {
-          model: this.model,
-          max_tokens: this.maxTokens,
-          system: SYSTEM_PROMPT,
-          messages: [
-            {
-              role: "user",
-              content: buildUserPrompt(transcript),
-            },
-          ],
+      const response = await this.client.responses.create({
+        model: this.model,
+        instructions: SYSTEM_PROMPT,
+        input: buildUserPrompt(transcript),
+        max_output_tokens: this.maxOutputTokens,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "sermon_summary",
+            schema,
+            strict: true,
+          },
         },
-        {
-          headers: { "anthropic-beta": "structured-outputs-2025-11-13" },
-          body: { output_format: { type: "json_schema", schema } },
-        },
-      );
+      });
 
-      const textBlock = response.content.find(
-        (block) => block.type === "text",
-      );
-      const text = textBlock && "text" in textBlock ? textBlock.text : "";
-      const parsed = SummarySchema.parse(JSON.parse(text));
+      const parsed = SummarySchema.parse(JSON.parse(response.output_text));
 
       return {
         ...parsed,
-        rawResponse: text,
+        rawResponse: response.output_text,
       };
     } catch (error) {
       throw wrapError(error, SummarizationError);

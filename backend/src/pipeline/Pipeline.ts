@@ -26,7 +26,7 @@ export class Pipeline {
       ...config.openai,
       ...config.whisper,
     });
-    this.summarization = new SummarizationService(config.anthropic);
+    this.summarization = new SummarizationService(config.openai);
     this.youtube = new YouTubeService();
     this.logger = logger;
   }

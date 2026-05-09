@@ -1,13 +1,12 @@
 import type { MysqlConfig } from "../services/MysqlService.js";
 
 export interface AppConfig {
-  openai: { apiKey: string };
-  anthropic: { apiKey: string; model: string };
+  openai: { apiKey: string; summaryModel: string };
   whisper: { model: string; language: string };
   mysql: MysqlConfig | null;
 }
 
-const REQUIRED_KEYS = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"] as const;
+const REQUIRED_KEYS = ["OPENAI_API_KEY"] as const;
 
 export function validateConfig() {
   const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
@@ -25,10 +24,9 @@ export function loadConfig(): AppConfig {
   const mysqlDatabase = process.env.MYSQL_DATABASE;
 
   return {
-    openai: { apiKey: process.env.OPENAI_API_KEY! },
-    anthropic: {
-      apiKey: process.env.ANTHROPIC_API_KEY!,
-      model: "claude-sonnet-4-5",
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY!,
+      summaryModel: process.env.OPENAI_SUMMARY_MODEL || "gpt-4.1-mini",
     },
     whisper: { model: "whisper-1", language: "id" },
     mysql:

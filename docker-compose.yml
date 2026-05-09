@@ -1,0 +1,61 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-catatan-firman}
+      MYSQL_USER: ${MYSQL_USER:-catatan}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-catatan}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-catatan-root}
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" --silent",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-catatan}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-catatan}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-catatan-firman}
+    ports:
+      - "${APP_HOST_PORT:-3001}:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  backend:
+    profiles:
+      - cli
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_SUMMARY_MODEL: ${OPENAI_SUMMARY_MODEL:-gpt-4.1-mini}
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-catatan}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-catatan}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-catatan-firman}
+      MYSQL_PORT: 3306
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["--help"]
+
+volumes:
+  mysql-data:
