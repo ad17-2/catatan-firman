@@ -6,7 +6,13 @@ export interface AppConfig {
   mysql: MysqlConfig | null;
 }
 
+export interface ApiConfig {
+  port: number;
+  basicPassword: string;
+}
+
 const REQUIRED_KEYS = ["OPENAI_API_KEY"] as const;
+const REQUIRED_API_KEYS = ["INGEST_BASIC_PASSWORD"] as const;
 
 export function validateConfig() {
   const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
@@ -17,6 +23,35 @@ export function validateMysqlConfig() {
   const hasHost = !!process.env.MYSQL_HOST;
   const hasDatabase = !!process.env.MYSQL_DATABASE;
   return { isValid: hasHost && hasDatabase, hasHost, hasDatabase };
+}
+
+export function validateApiConfig() {
+  const appValidation = validateConfig();
+  const mysqlValidation = validateMysqlConfig();
+  const missingApiKeys = REQUIRED_API_KEYS.filter((key) => !process.env[key]);
+  const missingKeys: string[] = [
+    ...appValidation.missingKeys,
+    ...missingApiKeys,
+  ];
+
+  if (!mysqlValidation.hasHost) missingKeys.push("MYSQL_HOST");
+  if (!mysqlValidation.hasDatabase) missingKeys.push("MYSQL_DATABASE");
+
+  return { isValid: missingKeys.length === 0, missingKeys };
+}
+
+export function loadApiConfig(): ApiConfig {
+  const rawPort = process.env.PORT;
+  const port = rawPort ? Number.parseInt(rawPort, 10) : 3000;
+
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new Error("PORT must be an integer between 0 and 65535");
+  }
+
+  return {
+    port,
+    basicPassword: process.env.INGEST_BASIC_PASSWORD!,
+  };
 }
 
 export function loadConfig(): AppConfig {

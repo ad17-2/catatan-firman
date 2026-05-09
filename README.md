@@ -101,6 +101,8 @@ Create `backend/.env` for local CLI usage.
 | `MYSQL_USER` | No | MySQL username. Defaults to `root` locally. |
 | `MYSQL_PASSWORD` | No | MySQL password. Defaults to empty locally. |
 | `MYSQL_PORT` | No | MySQL port. Defaults to `3306`. |
+| `INGEST_BASIC_PASSWORD` | For API server | Password for Basic Auth on `POST /api/ingest`. |
+| `PORT` | For API server | HTTP API port. Defaults to `3000`. |
 
 Example:
 
@@ -208,6 +210,30 @@ Command-line options:
 | `-i, --input <url>` | YouTube URL. Required. |
 | `--save` | Save the summary, transcript, and transcript segments to MySQL. |
 
+### Triggering Ingestion through the Backend API
+
+Start the guarded ingest API:
+
+```bash
+cd backend
+INGEST_BASIC_PASSWORD=change-me npm run serve
+```
+
+Trigger processing with Basic Auth. Any username is accepted; the password must match `INGEST_BASIC_PASSWORD`.
+
+```bash
+curl -X POST "http://localhost:3000/api/ingest" \
+  -u "local:change-me" \
+  -H "Content-Type: application/json" \
+  -d '{"youtubeUrl":"https://youtube.com/watch?v=xxx"}'
+```
+
+Health check:
+
+```bash
+curl "http://localhost:3000/health"
+```
+
 ### Running the Frontend Locally
 
 ```bash
@@ -240,6 +266,7 @@ Services:
 | `mysql` | MySQL 8.4 with schema initialization from `docker/mysql/init`. Exposed on `localhost:3307` by default. |
 | `app` | Production Next.js app. Exposed on [http://localhost:3001](http://localhost:3001) by default. |
 | `backend` | Optional CLI service under the `cli` profile. |
+| `backend-api` | Optional ingest API service under the `api` profile. Exposed on [http://localhost:3002](http://localhost:3002) by default. |
 
 Run the backend CLI through Docker Compose:
 
@@ -248,6 +275,12 @@ OPENAI_API_KEY=sk-... docker compose --profile cli run --rm backend -i "https://
 ```
 
 The backend container connects to MySQL through the Compose network and stores processed sermons in the `mysql` service database.
+
+Run the backend API through Docker Compose:
+
+```bash
+OPENAI_API_KEY=sk-... INGEST_BASIC_PASSWORD=change-me docker compose --profile api up --build backend-api
+```
 
 ## Project Structure
 

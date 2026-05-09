@@ -57,5 +57,28 @@ services:
         condition: service_healthy
     command: ["--help"]
 
+  backend-api:
+    profiles:
+      - api
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      INGEST_BASIC_PASSWORD: ${INGEST_BASIC_PASSWORD:-local-ingest-password}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_SUMMARY_MODEL: ${OPENAI_SUMMARY_MODEL:-gpt-4.1-mini}
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-catatan}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-catatan}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-catatan-firman}
+      MYSQL_PORT: 3306
+    ports:
+      - "${BACKEND_API_HOST_PORT:-3002}:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
 volumes:
   mysql-data:
